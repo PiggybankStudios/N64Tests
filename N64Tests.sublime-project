@@ -2,14 +2,23 @@
 	"folders":
 	[
 		{
-			"path": "."
+			"path": ".",
+			"folder_exclude_patterns": [
+				"build",
+			],
+		},
+		{
+			"path": "C:/gamedev/downloaded/libdragon",
+			"folder_exclude_patterns": [
+				".github",
+			],
+			"file_exclude_patterns": [
+				"*.elf",
+			],
 		},
 		{
 			"name": "PigBuild",
 			"path": "C:/gamedev/projects/pig_build/src"
 		},
-		{
-			"path": "C:/gamedev/downloaded/libdragon"
-		}
 	]
 }

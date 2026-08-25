@@ -7,6 +7,21 @@ Description:
 */
 
 #include "pig_build.h"
+#include "sc64deployer_flags.h"
+
+#define DEBUG_BUILD      1
+#define UPLOAD_TO_SC64   1
+#define INSTALL_TO_SC64  0 // Make sure the console is powered off
+
+#if DEBUG_BUILD
+#define IF_DEBUG(...)     __VA_ARGS__
+#define IF_NOT_DEBUG(...) //nothing
+#define IF_RELEASE(...)   //nothing
+#else
+#define IF_DEBUG(...)     //nothing
+#define IF_NOT_DEBUG(...) __VA_ARGS__
+#define IF_RELEASE(...)   __VA_ARGS__
+#endif
 
 #define TOOLCHAIN_PREFIX "mips64-elf"
 #define ROM_NAME         "n64_tests"
@@ -19,15 +34,16 @@ Description:
 int main()
 {
 	PigBuildDebugMode = false;
-	RecompileIfNeeded(StrArray_Empty);
+	RecompileIfNeeded(MakeStrArrayVa("../build_script.c", "../sc64deployer_flags.h"));
 	
 	Str libDragonSrcDir = StrLit("C:/gamedev/downloaded/libdragon");
 	Str toolchainDir = StrLit("F:/Programs/libdragon");
 	Str toolchainBinDir = JoinPathsLit(toolchainDir, "/bin");
-	Str gcc     = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-gcc.exe");
-	Str gpp     = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-g++.exe");
-	// Str ld      = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-ld.exe");
-	Str n64tool = JoinPathsLit(toolchainBinDir, "n64tool.exe");
+	Str gcc          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-gcc.exe");
+	Str gpp          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-g++.exe");
+	// Str ld           = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-ld.exe");
+	Str n64tool      = JoinPathsLit(toolchainBinDir, "n64tool.exe");
+	Str sc64deployer = StrLit("F:/Programs/sc64deployer/sc64deployer.exe");
 	
 	Str mainPath = StrLit("[ROOT]/src/main.c");
 	// Str mainPath = JoinPathsLit(libDragonSrcDir, "/examples/ctest/ctest.c");
@@ -47,6 +63,7 @@ int main()
 		AddArg(&compileArgs, GCC_COMPILE);
 		AddArgStr(&compileArgs, CLI_QUOTED_ARG, mainPath);
 		AddArgStr(&compileArgs, GCC_OUTPUT_FILE, oFilename);
+		IF_NOT_DEBUG(AddDefineArgLit(&compileArgs, "NDEBUG"));
 		AddArg(&compileArgs, "-march=vr4300");
 		AddArg(&compileArgs, "-mtune=vr4300");
 		AddArg(&compileArgs, "-mabi=o64");
@@ -119,6 +136,26 @@ int main()
 		
 		RunCliProgramAndExitOnFailure(n64tool, &toolArgs, StrLit("n64tool.exe threw an error!"));
 		AssertFileExist(romFilename, true);
+	}
+	
+	if (UPLOAD_TO_SC64)
+	{
+		PrintLine("Uploading %.*s to SC64...", StrPrint(romFilename));
+		CliArgs uploadArgs = EMPTY;
+		AddArg(&uploadArgs, SC64_CMD_UPLOAD);
+		AddArg(&uploadArgs, SC64_UPLOAD_OPTION_REBOOT); //TODO: What do we need to do in order to get this working? Warning says: no response for [Reboot] AUX message
+		AddArgStr(&uploadArgs, CLI_QUOTED_ARG, romFilename);
+		RunCliProgramAndExitOnFailure(sc64deployer, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 with sc64deployer.exe"));
+	}
+	
+	if (INSTALL_TO_SC64)
+	{
+		PrintLine("Installing %.*s on SC64...", StrPrint(romFilename));
+		CliArgs uploadArgs = EMPTY;
+		AddArg(&uploadArgs, SC64_CMD_SD);
+		AddArg(&uploadArgs, SC64_SD_SUBCMD_UPLOAD);
+		AddArgStr(&uploadArgs, CLI_QUOTED_ARG, romFilename);
+		RunCliProgramAndExitOnFailure(sc64deployer, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 SD Card with sc64deployer.exe"));
 	}
 	
 	WriteLine("DONE!");
