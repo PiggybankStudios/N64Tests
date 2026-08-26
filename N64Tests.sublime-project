@@ -8,12 +8,18 @@
 			],
 		},
 		{
-			"path": "C:/gamedev/downloaded/libdragon",
+			"path": "C:/gamedev/downloaded/libdragon-preview",
 			"folder_exclude_patterns": [
 				".github",
+				"website",
 			],
 			"file_exclude_patterns": [
 				"*.elf",
+				".gitattributes",
+				".gitignore",
+				"doxygen-public.conf",
+				"LICENSE.md",
+				".tokeignore",
 			],
 		},
 		{

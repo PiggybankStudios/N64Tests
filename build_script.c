@@ -8,10 +8,12 @@ Description:
 
 #include "pig_build.h"
 #include "sc64deployer_flags.h"
+#include "libdragon_bin_flags.h"
 
-#define DEBUG_BUILD      1
-#define UPLOAD_TO_SC64   1
-#define INSTALL_TO_SC64  0 // Make sure the console is powered off
+#define DEBUG_BUILD         1
+#define MAKE_RESOURCES_DFS  0
+#define UPLOAD_TO_SC64      1
+#define INSTALL_TO_SC64     0 // Make sure the console is powered off
 
 #if DEBUG_BUILD
 #define IF_DEBUG(...)     __VA_ARGS__
@@ -33,10 +35,10 @@ Description:
 
 int main()
 {
-	PigBuildDebugMode = false;
-	RecompileIfNeeded(MakeStrArrayVa("../build_script.c", "../sc64deployer_flags.h"));
+	PigBuildDebugMode = true;
+	RecompileIfNeeded(MakeStrArrayVa("../build_script.c", "../sc64deployer_flags.h", "../libdragon_bin_flags.h"));
 	
-	Str libDragonSrcDir = StrLit("C:/gamedev/downloaded/libdragon");
+	Str libDragonSrcDir = StrLit("C:/gamedev/downloaded/libdragon-preview");
 	Str toolchainDir = StrLit("F:/Programs/libdragon");
 	Str toolchainBinDir = JoinPathsLit(toolchainDir, "/bin");
 	Str gcc          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-gcc.exe");
@@ -44,6 +46,9 @@ int main()
 	// Str ld           = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-ld.exe");
 	Str n64tool      = JoinPathsLit(toolchainBinDir, "n64tool.exe");
 	Str sc64deployer = StrLit("F:/Programs/sc64deployer/sc64deployer.exe");
+	Str mkmodel      = JoinPathsLit(toolchainBinDir, MKMODEL_EXE);
+	Str mksprite     = JoinPathsLit(toolchainBinDir, MKSPRITE_EXE);
+	Str mkdfs        = JoinPathsLit(toolchainBinDir, MKDFS_EXE);
 	
 	Str mainPath = StrLit("[ROOT]/src/main.c");
 	// Str mainPath = JoinPathsLit(libDragonSrcDir, "/examples/ctest/ctest.c");
@@ -56,6 +61,76 @@ int main()
 	Str elfFilename = ChangePathExtension(mainFilename, StrLit(".elf"), true);
 	Str romFilename = StrLit(ROM_NAME ".z64");
 	
+	// +==============================+
+	// |     Make Resources .dfs      |
+	// +==============================+
+	Str resourcesDfsFilename = StrLit("resources.dfs");
+	if (MAKE_RESOURCES_DFS || !DoesFileExist(resourcesDfsFilename))
+	{
+		if (!DoesFileExist(resourcesDfsFilename) && !MAKE_RESOURCES_DFS) { PrintLine("Creating \"%.*s\" because it doesn't exist yet", StrPrint(resourcesDfsFilename)); }
+		
+		Str filesystemDir = StrLit("filesystem");
+		if (!DoesFolderExist(filesystemDir)) { MyCreateFolder(filesystemDir, /*createParentFoldersIfNeeded*/true); }
+		
+		// +==============================+
+		// |         Make Models          |
+		// +==============================+
+		{
+			Str modelsOutputDir = JoinPathsLit(filesystemDir, "models");
+			if (!DoesFolderExist(modelsOutputDir)) { MyCreateFolder(modelsOutputDir, false); }
+			
+			FileIter fileIter = StartFileIter(StrLit("../resources/models"));
+			bool isFolder = false;
+			Str path = Str_Empty;
+			while (StepFileIter(&fileIter, &path, &isFolder))
+			{
+				Str fileExt = GetFileExtPart(path, false);
+				if (StrAnyCaseEquals(fileExt, StrLit(".gltf")) ||
+					StrAnyCaseEquals(fileExt, StrLit(".glb")))
+				{
+					Str filename = GetFileNamePart(path, true);
+					Str outputFilename = ChangePathExtension(filename, StrLit(".model64"), false);
+					Str outputFilePath = JoinPaths(modelsOutputDir, outputFilename);
+					PrintLine("Converting %.*s to %.*s...", StrPrint(filename), StrPrint(outputFilename));
+					CliArgs mkModelArgs = EMPTY;
+					mkModelArgs.pathSepChar = '/';
+					AddArgStr(&mkModelArgs, MKMODEL_OUTPUT, modelsOutputDir);
+					AddArg(&mkModelArgs, MKMODEL_NO_ANIM_STREAMING);
+					AddArgNt(&mkModelArgs, MKMODEL_COMPRESS, "0");
+					IF_DEBUG(AddArg(&mkModelArgs, MKMODEL_VERBOSE));
+					AddArgStr(&mkModelArgs, CLI_QUOTED_ARG, path);
+					RunCliProgramAndExitOnFailure(mkmodel, &mkModelArgs, FormatStr("Failed to convert \"%.*s\"", StrPrint(filename)));
+					AssertFileExist(outputFilePath, false);
+					//TODO: Should we expect an anims file to get created?
+				}
+				else if (StrAnyCaseEquals(fileExt, StrLit(".png")))
+				{
+					Str filename = GetFileNamePart(path, true);
+					Str outputFilename = ChangePathExtension(filename, StrLit(".sprite"), false);
+					Str outputFilePath = JoinPaths(StrLit("filesystem/models"), outputFilename);
+					PrintLine("Converting %.*s to %.*s...", StrPrint(filename), StrPrint(outputFilename));
+					CliArgs mkSpriteArgs = EMPTY;
+					mkSpriteArgs.pathSepChar = '/';
+					AddArgNt(&mkSpriteArgs, MKSPRITE_OUTPUT, "filesystem/models");
+					AddArgNt(&mkSpriteArgs, MKSPRITE_FORMAT, "RGBA16");
+					IF_DEBUG(AddArg(&mkSpriteArgs, MKSPRITE_VERBOSE));
+					AddArgStr(&mkSpriteArgs, CLI_QUOTED_ARG, path);
+					RunCliProgramAndExitOnFailure(mksprite, &mkSpriteArgs, FormatStr("Failed to convert \"%.*s\"", StrPrint(filename)));
+					AssertFileExist(outputFilePath, false);
+				}
+			}
+		}
+		
+		CliArgs mkDfsArgs = EMPTY;
+		AddArgStr(&mkDfsArgs, CLI_QUOTED_ARG, resourcesDfsFilename);
+		AddArgStr(&mkDfsArgs, CLI_QUOTED_ARG, filesystemDir);
+		RunCliProgramAndExitOnFailure(mkdfs, &mkDfsArgs, FormatStr("Failed to create filesystem to contain resources \"%.*s\"", StrPrint(resourcesDfsFilename)));
+		AssertFileExist(resourcesDfsFilename, false);
+	}
+	
+	// +==============================+
+	// |           Compile            |
+	// +==============================+
 	{
 		PrintLine("Compiling %.*s...", StrPrint(mainFilename));
 		
@@ -64,6 +139,7 @@ int main()
 		AddArgStr(&compileArgs, CLI_QUOTED_ARG, mainPath);
 		AddArgStr(&compileArgs, GCC_OUTPUT_FILE, oFilename);
 		IF_NOT_DEBUG(AddDefineArgLit(&compileArgs, "NDEBUG"));
+		AddDefineArgLit(&compileArgs, "LIBDRAGON_PREVIEW=2");
 		AddArg(&compileArgs, "-march=vr4300");
 		AddArg(&compileArgs, "-mtune=vr4300");
 		AddArg(&compileArgs, "-mabi=o64");
@@ -93,10 +169,18 @@ int main()
 		AddArg(&compileArgs, "-ftrivial-auto-var-init=pattern");
 		AddArgNt(&compileArgs, GCC_LANG_VERSION, "gnu17");
 		
-		RunCliProgramAndExitOnFailure(gcc, &compileArgs, StrLit("Failed to compile"));
+		StrArray tags = EMPTY;
+		AddTag(&tags, T_GCC);
+		AddTag(&tags, T_LANG_C);
+		AddTag(&tags, T_OBJECT);
+		
+		RunCliProgramAndExitOnFailureTags(gcc, tags, &compileArgs, StrLit("Failed to compile"));
 		AssertFileExist(oFilename, true);
 	}
 	
+	// +==============================+
+	// |             Link             |
+	// +==============================+
 	{
 		PrintLine("Linking into %.*s...", StrPrint(elfFilename));
 		
@@ -115,12 +199,23 @@ int main()
 		AddArgStr(&linkerArgs, GCC_MAP_FILE, mapFilename);
 		//TODO: Add support for .externs file with -Wl,-T"file.externs"
 		
-		RunCliProgramAndExitOnFailure(gpp, &linkerArgs, StrLit("Failed to link"));
+		StrArray tags = EMPTY;
+		AddTag(&tags, T_GCC);
+		AddTag(&tags, T_LANG_C);
+		AddTag(&tags, T_LIBRARY);
+		
+		RunCliProgramAndExitOnFailureTags(gpp, tags, &linkerArgs, StrLit("Failed to link"));
 		AssertFileExist(elfFilename, true);
 	}
 	
+	// +==============================+
+	// |           Make ROM           |
+	// +==============================+
 	{
 		PrintLine("Creating %.*s...", StrPrint(romFilename));
+		
+		//TODO: mips64-elf-strip.exe on the .elf
+		//TODO: n64elfcompress.exe on the stripped .elf
 		
 		CliArgs toolArgs = EMPTY;
 		AddArgNt(&toolArgs, "--title \"[VAL]\"", ROM_TITLE);
@@ -130,14 +225,19 @@ int main()
 		AddArg(&toolArgs, "--toc");
 		AddArgStr(&toolArgs, "--output \"[VAL]\"", romFilename);
 		AddArgNt(&toolArgs, "--align [VAL]", "256");
-		// TODO: $<.stripped --align 8
-		// TODO: $<.sym --align 8
 		AddArgStr(&toolArgs, CLI_QUOTED_ARG, elfFilename);
+		AddArgNt(&toolArgs, "--align [VAL]", "8");
+		if (DoesFileExist(resourcesDfsFilename)) { AddArgStr(&toolArgs, CLI_QUOTED_ARG, resourcesDfsFilename); }
 		
 		RunCliProgramAndExitOnFailure(n64tool, &toolArgs, StrLit("n64tool.exe threw an error!"));
 		AssertFileExist(romFilename, true);
+		
+		//TODO: ed64romconfig.exe on the .z64 [--savetype none/eeprom4k/eeprom16k/sram256k/sram768k/sram1m/flashram] [--rtc] [--regionfree] [--conroller1/2/3/4 n64/none/mouse/vru/gamecube/randnetkeyboard/gamecubekeyboard/n64,pak=rumble/controller/transfer]
 	}
 	
+	// +==============================+
+	// |            Upload            |
+	// +==============================+
 	if (UPLOAD_TO_SC64)
 	{
 		PrintLine("Uploading %.*s to SC64...", StrPrint(romFilename));
@@ -148,6 +248,9 @@ int main()
 		RunCliProgramAndExitOnFailure(sc64deployer, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 with sc64deployer.exe"));
 	}
 	
+	// +==============================+
+	// |           Install            |
+	// +==============================+
 	if (INSTALL_TO_SC64)
 	{
 		PrintLine("Installing %.*s on SC64...", StrPrint(romFilename));
