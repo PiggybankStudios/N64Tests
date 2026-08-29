@@ -11,7 +11,7 @@ Description:
 #include "libdragon_bin_flags.h"
 
 #define DEBUG_BUILD         1
-#define MAKE_RESOURCES_DFS  0
+#define MAKE_RESOURCES_DFS  1
 #define UPLOAD_TO_SC64      1
 #define INSTALL_TO_SC64     0 // Make sure the console is powered off
 
@@ -35,7 +35,7 @@ Description:
 
 int main()
 {
-	PigBuildDebugMode = true;
+	PigBuildDebugMode = false;
 	RecompileIfNeeded(MakeStrArrayVa("../build_script.c", "../sc64deployer_flags.h", "../libdragon_bin_flags.h"));
 	
 	Str libDragonSrcDir = StrLit("C:/gamedev/downloaded/libdragon-preview");
@@ -70,14 +70,15 @@ int main()
 		if (!DoesFileExist(resourcesDfsFilename) && !MAKE_RESOURCES_DFS) { PrintLine("Creating \"%.*s\" because it doesn't exist yet", StrPrint(resourcesDfsFilename)); }
 		
 		Str filesystemDir = StrLit("filesystem");
-		if (!DoesFolderExist(filesystemDir)) { MyCreateFolder(filesystemDir, /*createParentFoldersIfNeeded*/true); }
+		if (DoesFolderExist(filesystemDir)) { MyRemoveDirectory(filesystemDir, true); }
+		MyCreateFolder(filesystemDir, false);
 		
 		// +==============================+
 		// |         Make Models          |
 		// +==============================+
 		{
 			Str modelsOutputDir = JoinPathsLit(filesystemDir, "models");
-			if (!DoesFolderExist(modelsOutputDir)) { MyCreateFolder(modelsOutputDir, false); }
+			MyCreateFolder(modelsOutputDir, false);
 			
 			FileIter fileIter = StartFileIter(StrLit("../resources/models"));
 			bool isFolder = false;
@@ -158,14 +159,14 @@ int main()
 		AddArgNt(&compileArgs, GCC_WARNING_LEVEL, "all");
 		AddArg(&compileArgs, GCC_WARNINGS_AS_ERRORS);
 		AddArgNt(&compileArgs, GCC_DISABLE_WARNING_AS_ERROR, "deprecated-declarations");
-		AddArgNt(&compileArgs, GCC_DISABLE_WARNING_AS_ERROR, "unused-variable");
-		AddArgNt(&compileArgs, GCC_DISABLE_WARNING_AS_ERROR, "unused-but-set-variable");
-		AddArgNt(&compileArgs, GCC_DISABLE_WARNING_AS_ERROR, "unused-function");
-		AddArgNt(&compileArgs, GCC_DISABLE_WARNING_AS_ERROR, "unused-parameter");
-		AddArgNt(&compileArgs, GCC_DISABLE_WARNING_AS_ERROR, "unused-but-set-parameter");
-		AddArgNt(&compileArgs, GCC_DISABLE_WARNING_AS_ERROR, "unused-label");
-		AddArgNt(&compileArgs, GCC_DISABLE_WARNING_AS_ERROR, "unused-local-typedefs");
-		AddArgNt(&compileArgs, GCC_DISABLE_WARNING_AS_ERROR, "unused-const-variable");
+		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-variable");
+		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-but-set-variable");
+		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-function");
+		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-parameter");
+		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-but-set-parameter");
+		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-label");
+		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-local-typedefs");
+		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-const-variable");
 		AddArg(&compileArgs, "-ftrivial-auto-var-init=pattern");
 		AddArgNt(&compileArgs, GCC_LANG_VERSION, "gnu17");
 		

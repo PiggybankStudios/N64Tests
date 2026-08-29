@@ -1,3 +1,6 @@
 build/
+resources/models/*.blend
+resources/models/*.blend1
+resources/models/orig_*.*
 *.sublime-workspace
 .DS_Store
