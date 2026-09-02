@@ -11,7 +11,7 @@ Description:
 #include "libdragon_bin_flags.h"
 
 #define DEBUG_BUILD         1
-#define MAKE_RESOURCES_DFS  1
+#define MAKE_RESOURCES_DFS  0
 #define UPLOAD_TO_SC64      1
 #define INSTALL_TO_SC64     0 // Make sure the console is powered off
 
