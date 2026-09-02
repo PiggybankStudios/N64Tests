@@ -29,23 +29,22 @@ Description:
 #define ROM_NAME         "n64_tests"
 #define ROM_TITLE        "N64 Tests"
 
-#if !BUILDING_ON_WINDOWS
-#error This project is only setup to build on Windows right now!
-#endif
-
 int main()
 {
 	PigBuildDebugMode = false;
 	RecompileIfNeeded(MakeStrArrayVa("../build_script.c", "../sc64deployer_flags.h", "../libdragon_bin_flags.h"));
 	
-	Str libDragonSrcDir = StrLit("C:/gamedev/downloaded/libdragon-preview");
-	Str toolchainDir = StrLit("F:/Programs/libdragon");
+	// Str libDragonSrcDir = StrLit("C:/gamedev/downloaded/libdragon-preview");
+	Str libDragonSrcDir = StrLit("/Users/robbitay/my/repos/libdragon");
+	// Str toolchainDir = StrLit("F:/Programs/libdragon");
+	Str toolchainDir = StrLit("/opt/libdragon");
 	Str toolchainBinDir = JoinPathsLit(toolchainDir, "/bin");
-	Str gcc          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-gcc.exe");
-	Str gpp          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-g++.exe");
+	Str gcc          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-gcc" EXE_EXT);
+	Str gpp          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-g++" EXE_EXT);
 	// Str ld           = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-ld.exe");
-	Str n64tool      = JoinPathsLit(toolchainBinDir, "n64tool.exe");
-	Str sc64deployer = StrLit("F:/Programs/sc64deployer/sc64deployer.exe");
+	Str n64tool      = JoinPathsLit(toolchainBinDir, "n64tool" EXE_EXT);
+	// Str sc64deployer = StrLit("F:/Programs/sc64deployer/sc64deployer.exe");
+	Str sc64deployer = StrLit("/Users/robbitay/my/bin/sc64deployer");
 	Str mkmodel      = JoinPathsLit(toolchainBinDir, MKMODEL_EXE);
 	Str mksprite     = JoinPathsLit(toolchainBinDir, MKSPRITE_EXE);
 	Str mkdfs        = JoinPathsLit(toolchainBinDir, MKDFS_EXE);
@@ -215,8 +214,8 @@ int main()
 	{
 		PrintLine("Creating %.*s...", StrPrint(romFilename));
 		
-		//TODO: mips64-elf-strip.exe on the .elf
-		//TODO: n64elfcompress.exe on the stripped .elf
+		//TODO: mips64-elf-strip on the .elf
+		//TODO: n64elfcompress on the stripped .elf
 		
 		CliArgs toolArgs = EMPTY;
 		AddArgNt(&toolArgs, "--title \"[VAL]\"", ROM_TITLE);
@@ -230,10 +229,10 @@ int main()
 		AddArgNt(&toolArgs, "--align [VAL]", "8");
 		if (DoesFileExist(resourcesDfsFilename)) { AddArgStr(&toolArgs, CLI_QUOTED_ARG, resourcesDfsFilename); }
 		
-		RunCliProgramAndExitOnFailure(n64tool, &toolArgs, StrLit("n64tool.exe threw an error!"));
+		RunCliProgramAndExitOnFailure(n64tool, &toolArgs, StrLit("n64tool threw an error!"));
 		AssertFileExist(romFilename, true);
 		
-		//TODO: ed64romconfig.exe on the .z64 [--savetype none/eeprom4k/eeprom16k/sram256k/sram768k/sram1m/flashram] [--rtc] [--regionfree] [--conroller1/2/3/4 n64/none/mouse/vru/gamecube/randnetkeyboard/gamecubekeyboard/n64,pak=rumble/controller/transfer]
+		//TODO: ed64romconfig on the .z64 [--savetype none/eeprom4k/eeprom16k/sram256k/sram768k/sram1m/flashram] [--rtc] [--regionfree] [--conroller1/2/3/4 n64/none/mouse/vru/gamecube/randnetkeyboard/gamecubekeyboard/n64,pak=rumble/controller/transfer]
 	}
 	
 	// +==============================+
@@ -246,7 +245,7 @@ int main()
 		AddArg(&uploadArgs, SC64_CMD_UPLOAD);
 		AddArg(&uploadArgs, SC64_UPLOAD_OPTION_REBOOT); //TODO: What do we need to do in order to get this working? Warning says: no response for [Reboot] AUX message
 		AddArgStr(&uploadArgs, CLI_QUOTED_ARG, romFilename);
-		RunCliProgramAndExitOnFailure(sc64deployer, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 with sc64deployer.exe"));
+		RunCliProgramAndExitOnFailure(sc64deployer, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 with sc64deployer"));
 	}
 	
 	// +==============================+
@@ -259,7 +258,7 @@ int main()
 		AddArg(&uploadArgs, SC64_CMD_SD);
 		AddArg(&uploadArgs, SC64_SD_SUBCMD_UPLOAD);
 		AddArgStr(&uploadArgs, CLI_QUOTED_ARG, romFilename);
-		RunCliProgramAndExitOnFailure(sc64deployer, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 SD Card with sc64deployer.exe"));
+		RunCliProgramAndExitOnFailure(sc64deployer, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 SD Card with sc64deployer"));
 	}
 	
 	WriteLine("DONE!");

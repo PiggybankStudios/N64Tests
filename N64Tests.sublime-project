@@ -24,7 +24,7 @@
 		},
 		{
 			"name": "PigBuild",
-			"path": "C:/gamedev/projects/pig_build/src"
+			"path": "../pig_build/src"
 		},
 	]
 }

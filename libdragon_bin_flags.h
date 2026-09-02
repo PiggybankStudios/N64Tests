@@ -14,7 +14,7 @@ Date:   08\25\2026
 //   Supported window sizes: 2, 4, 8, 16, 32, 64, 128, 256
 //   The window size affects the memory used by asset_fopen() only.
 //   If you only use asset_load(), use the biggest window (256 KiB) to improve ratio.
-#define MKASSET_EXE "mkasset.exe"
+#define MKASSET_EXE "mkasset" EXE_EXT
 #define MKASSET_OUTPUT   "--output <dir>"       //-o, Specify output directory (default: .)
 #define MKASSET_COMPRESS "--compress <algo>"    //-c, Compression level 0-3 (default: 1)
 #define MKASSET_WINDOW   "--window <window>"    //-w, Maximum size of the matching window in KiB. (default: 4)
@@ -23,10 +23,10 @@ Date:   08\25\2026
 // mkdfs.exe <File> <Directory>
 //   where <File> is the resulting filesystem image
 //   and <Directory> is the directory (including subdirectories) to include
-#define MKDFS_EXE "mkdfs.exe"
+#define MKDFS_EXE "mkdfs" EXE_EXT
 
 // mkfont.exe [flags] <input files...>
-#define MKFONT_EXE "mkfont.exe"
+#define MKFONT_EXE "mkfont" EXE_EXT
 // Command-line flags:
 //    -o/--output <dir>         Specify output directory (default: .)
 //    -v/--verbose              Verbose output
@@ -58,7 +58,7 @@ Date:   08\25\2026
 //                              RGBA16, RGBA32, CI4, CI8 (default: RGBA16)
 
 // mkmaterial [flags] <file.mat>...
-#define MKMATERIAL_EXE "mkmaterial.exe"
+#define MKMATERIAL_EXE "mkmaterial" EXE_EXT
 // Command-line flags:
 //   -v, --verbose            verbose output
 //   -h, --help               print this help message
@@ -69,7 +69,7 @@ Date:   08\25\2026
 //   --raw-material           generate a single raw headerless material instead of a database
 
 // mkmodel.exe [flags] <input files...>
-#define MKMODEL_EXE "mkmodel.exe"
+#define MKMODEL_EXE "mkmodel" EXE_EXT
 #define   MKMODEL_OUTPUT            "--output \"[VAL]\""   //-o, Specify output directory (default: .)
 #define   MKMODEL_NO_ANIM_STREAMING "--anim-no-stream"     //    Disable animation streaming
 #define   MKMODEL_COMPRESS          "--compress \"[VAL]\"" //-c, Compress output files (default: 1)
@@ -79,7 +79,7 @@ Date:   08\25\2026
 //   Supported formats: AUTO, RGBA32, RGBA16, YUV16, IA16, CI8, I8, IA8, CI4, I4, IA4, ZBUF, IHQ
 //   Supported mipmap algorithms: NONE (disable), BOX
 //   Supported dithering algorithms: NONE (disable), RANDOM, ORDERED.
-#define MKSPRITE_EXE "mksprite.exe"
+#define MKSPRITE_EXE "mksprite" EXE_EXT
 #define   MKSPRITE_VERBOSE           "--verbose"               //-v, Verbose output (can be specified multiple times)
 #define   MKSPRITE_OUTPUT            "--output \"[VAL]\""      //-o, Specify output directory (default: .)
 #define   MKSPRITE_FORMAT            "--format [VAL]"          //-f, Specify output RDP surface format (default: AUTO)
