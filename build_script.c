@@ -12,8 +12,8 @@ Description:
 
 #define DEBUG_BUILD         1
 #define MAKE_RESOURCES_DFS  0
-#define UPLOAD_TO_SC64      0
-#define START_ARES_EMULATOR 1 // Runs Ares emulator - https://ares-emu.net/
+#define UPLOAD_TO_SC64      1
+#define START_ARES_EMULATOR 0 // Runs Ares emulator - https://ares-emu.net/
 #define INSTALL_TO_SC64     0 // Make sure the console is powered off
 
 #if DEBUG_BUILD

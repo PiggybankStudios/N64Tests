@@ -93,6 +93,12 @@ void RenderRom()
 	// Clear the framebuffer with black
 	rdpq_clear((color_t){59, 58, 50, 0}); // 0x3B3A32
 	
+	for (int y = 0; y < 480; y+=5)
+	{
+		rdpq_set_mode_fill(RGBA32(100, 32+y/4, 100, 0xFF));
+		rdpq_fill_rectangle(0, y, 640, y+5);
+	}
+	
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 15, rom.rtcAvailable      ? "RTC: Available"           : "RTC: NOT AVAILABLE"          );
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 25, rom.usbDebugAvailable ? "USB Debugging: Available" : "USB Debugging: NOT AVAILABLE");
 	
