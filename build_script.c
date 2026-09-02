@@ -12,7 +12,8 @@ Description:
 
 #define DEBUG_BUILD         1
 #define MAKE_RESOURCES_DFS  0
-#define UPLOAD_TO_SC64      1
+#define UPLOAD_TO_SC64      0
+#define START_ARES_EMULATOR 1 // Runs Ares emulator - https://ares-emu.net/
 #define INSTALL_TO_SC64     0 // Make sure the console is powered off
 
 #if DEBUG_BUILD
@@ -34,17 +35,23 @@ int main()
 	PigBuildDebugMode = false;
 	RecompileIfNeeded(MakeStrArrayVa("../build_script.c", "../sc64deployer_flags.h", "../libdragon_bin_flags.h"));
 	
-	// Str libDragonSrcDir = StrLit("C:/gamedev/downloaded/libdragon-preview");
-	Str libDragonSrcDir = StrLit("/Users/robbitay/my/repos/libdragon");
-	// Str toolchainDir = StrLit("F:/Programs/libdragon");
-	Str toolchainDir = StrLit("/opt/libdragon");
+	IF_WINDOWS(Str libDragonSrcDir = StrLit("C:/gamedev/downloaded/libdragon-preview"));
+	IF_OSX(    Str libDragonSrcDir = StrLit("/Users/robbitay/my/repos/libdragon"));
+	
+	IF_WINDOWS(Str toolchainDir = StrLit("F:/Programs/libdragon"));
+	IF_OSX(    Str toolchainDir = StrLit("/opt/libdragon"));
+	
+	IF_WINDOWS(Str sc64deployer = StrLit("F:/Programs/sc64deployer/sc64deployer" EXE_EXT));
+	IF_OSX(    Str sc64deployer = StrLit("/Users/robbitay/my/bin/sc64deployer"))
+	
+	IF_WINDOWS(Str aresEmulator = StrLit("F:/Programs/ares-v129/ares" EXE_EXT)); //TODO: Verify this
+	// IF_OSX(Str aresEmulator = StrLit("/Applications/ares.app/Contents/MacOS/ares"));
+	
 	Str toolchainBinDir = JoinPathsLit(toolchainDir, "/bin");
 	Str gcc          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-gcc" EXE_EXT);
 	Str gpp          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-g++" EXE_EXT);
-	// Str ld           = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-ld.exe");
-	Str n64tool      = JoinPathsLit(toolchainBinDir, "n64tool" EXE_EXT);
-	// Str sc64deployer = StrLit("F:/Programs/sc64deployer/sc64deployer.exe");
-	Str sc64deployer = StrLit("/Users/robbitay/my/bin/sc64deployer");
+	// Str ld           = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-ld" EXE_EXT);
+	Str n64tool      = JoinPathsLit(toolchainBinDir, "n64tool" EXE_EXT);;
 	Str mkmodel      = JoinPathsLit(toolchainBinDir, MKMODEL_EXE);
 	Str mksprite     = JoinPathsLit(toolchainBinDir, MKSPRITE_EXE);
 	Str mkdfs        = JoinPathsLit(toolchainBinDir, MKDFS_EXE);
@@ -259,6 +266,26 @@ int main()
 		AddArg(&uploadArgs, SC64_SD_SUBCMD_UPLOAD);
 		AddArgStr(&uploadArgs, CLI_QUOTED_ARG, romFilename);
 		RunCliProgramAndExitOnFailure(sc64deployer, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 SD Card with sc64deployer"));
+	}
+	
+	// +==============================+
+	// |        Start Emulator        |
+	// +==============================+
+	if (START_ARES_EMULATOR)
+	{
+		#if BUILDING_ON_WINDOWS
+		CliArgs emuArgs = EMPTY;
+		AddArgStr(&emuArgs, CLI_QUOTED_ARG, romFilename);
+		RunCliProgramAndExitOnFailure(aresEmulator, &emuArgs, StrLit("Failed to start Ares emulator!"));
+		#elif BUILDING_ON_OSX
+		CliArgs emuArgs = EMPTY;
+		AddArg(&emuArgs, "-a"); //Open an installed app by name
+		AddArg(&emuArgs, "ares"); //Open an installed app by name
+		AddArgStr(&emuArgs, CLI_QUOTED_ARG, romFilename);
+		RunCliProgramAndExitOnFailure(StrLit("open"), &emuArgs, StrLit("Failed to start Ares emulator!"));
+		#else
+		#error Unsupported platform!
+		#endif
 	}
 	
 	WriteLine("DONE!");
