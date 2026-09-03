@@ -155,6 +155,7 @@ int main()
 		AddArg(&compileArgs, GCC_SEP_FUNC_SECTIONS);
 		AddArg(&compileArgs, GCC_SEP_DATA_SECTIONS);
 		AddArg(&compileArgs, GCC_DEBUG_INFO_DEFAULT);
+		// AddArg(&compileArgs, CLANG_FULL_FILE_PATHS); //TODO: Does GCC support full paths?
 		// AddArg(&compileArgs, "-ffile-prefix-map="$(CURDIR)"=$(N64_BACKTRACE_FILE_PREFIX)"); // NOTE: if you change this, also change backtrace() in backtrace.c
 		AddArg(&compileArgs, "-ffast-math");
 		AddArg(&compileArgs, "-ftrapping-math");
@@ -199,6 +200,7 @@ int main()
 		AddArgNt(&linkerArgs, GCC_SYSTEM_LIBRARY, "c");
 		AddArgNt(&linkerArgs, GCC_SYSTEM_LIBRARY, "dragon");
 		AddArgNt(&linkerArgs, GCC_SYSTEM_LIBRARY, "m");
+		// AddArgNt(&linkerArgs, GCC_SYSTEM_LIBRARY, "g");
 		AddArgNt(&linkerArgs, GCC_SYSTEM_LIBRARY, "dragonsys");
 		AddArgStr(&linkerArgs, "-Wl," GCC_LINKER_SCRIPT, JoinPathsLit(libDragonSrcDir, "/n64.ld"));
 		AddArg(&linkerArgs, GCC_GC_SECTIONS);

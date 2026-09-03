@@ -22,10 +22,15 @@ struct RomState
 	uint32_t prevRomTime;
 	uint32_t romTime;
 	uint32_t elapsedMs;
+	float timeScale;
 	
 	joypad_buttons_t prevPadStates[4];
 	
-	// model64_t carModel;
+	#if ENABLE_CAR_RENDER
+	model64_t* carModel;
+	float carRotation1;
+	float carRotation2;
+	#endif //ENABLE_CAR_RENDER
 };
 
 extern RomState rom;

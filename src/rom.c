@@ -38,7 +38,7 @@ void InitRom()
 	debugf("rtcAvailable = %s\n", rom.rtcAvailable ? "YES" : "NO");
 	
 	// Initialize the display to 640x480 resolution - 16-bit - 2 buffers
-	display_init(RESOLUTION_640x480, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
+	display_init(RESOLUTION_320x240, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
 	
 	// Initialize the RDP (Command) Queue so we can send commands to the Reality Display Processor
 	rdpq_init();
@@ -51,6 +51,11 @@ void InitRom()
 	rom.prevRomTime = get_ticks_ms();
 	rom.romTime = rom.prevRomTime;
 	rom.elapsedMs = 0;
+	rom.timeScale = 1.0f;
+	
+	#if ENABLE_CAR_RENDER
+	Test_Init3dCar();
+	#endif
 	
 	rom.shutdown = false;
 	rom.initialized = true;
@@ -72,6 +77,7 @@ void UpdateRom()
 	rom.prevRomTime = rom.romTime;
 	rom.romTime = get_ticks_ms();
 	rom.elapsedMs = (rom.romTime >= rom.prevRomTime) ? (rom.romTime - rom.prevRomTime) : 0;
+	rom.timeScale = ((float)rom.elapsedMs / 33.0f);
 	
 	if (pads[0].a && !rom.prevPadStates[0].a) { debugf("A Button was Pressed!\n"); }
 	
@@ -88,8 +94,9 @@ void RenderRom()
 {
 	// Acquire a free framebuffer for rendering
 	surface_t* disp = display_get();
+	surface_t* zbuf = display_get_zbuf();
 	// Attach the framebuffer for use by rdpq
-	rdpq_attach(disp, NULL);
+	rdpq_attach(disp, zbuf);
 	// Clear the framebuffer with black
 	rdpq_clear((color_t){59, 58, 50, 0}); // 0x3B3A32
 	
@@ -105,6 +112,10 @@ void RenderRom()
 	char printBuffer[32];
 	snprintf(&printBuffer[0], sizeof(printBuffer), "romTime: %lu", rom.romTime);
 	rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 15, &printBuffer[0]);
+	
+	#if ENABLE_CAR_RENDER
+	Test_Render3dCar();
+	#endif
 	
 	Test_RenderDfsEntries();
 	

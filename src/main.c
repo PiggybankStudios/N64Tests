@@ -7,7 +7,11 @@ Description:
 	** All other source files are #included inside this one (aka a "unity build")
 */
 
+#include <GL/gl.h>
+#include <GL/gl_integration.h>
+
 #include <libdragon.h>
+#include <model64.h>
 
 // +==============================+
 // |           Headers            |
