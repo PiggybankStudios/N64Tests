@@ -5,6 +5,9 @@
 			"path": ".",
 			"folder_exclude_patterns": [
 				"build",
+				"core",
+				".ark",
+				".ark_server",
 			],
 		},
 		{
@@ -22,6 +25,10 @@
 				"LICENSE.md",
 				".tokeignore",
 			],
+		},
+		{
+			"name": "PigCore",
+			"path": "core/src"
 		},
 		{
 			"name": "PigBuild",

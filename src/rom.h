@@ -28,8 +28,7 @@ struct RomState
 	
 	#if ENABLE_CAR_RENDER
 	model64_t* carModel;
-	float carRotation1;
-	float carRotation2;
+	float carRotation;
 	#endif //ENABLE_CAR_RENDER
 };
 

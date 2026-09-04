@@ -147,10 +147,12 @@ int main()
 		AddArgStr(&compileArgs, GCC_OUTPUT_FILE, oFilename);
 		IF_NOT_DEBUG(AddDefineArgLit(&compileArgs, "NDEBUG"));
 		AddDefineArgLit(&compileArgs, "LIBDRAGON_PREVIEW=2");
+		AddIncludeDirArgLit(&compileArgs, "[ROOT]/src");
+		AddIncludeDirArgLit(&compileArgs, "[ROOT]/core/src");
+		AddIncludeDirArgStr(&compileArgs, JoinPaths(libDragonSrcDir, StrLit("/include")));
 		AddArg(&compileArgs, "-march=vr4300");
 		AddArg(&compileArgs, "-mtune=vr4300");
 		AddArg(&compileArgs, "-mabi=o64");
-		AddArgStr(&compileArgs, GCC_INCLUDE_DIR, JoinPaths(libDragonSrcDir, StrLit("/include")));
 		AddArgNt(&compileArgs, GCC_ALIGN_FUNCS_TO, "32");
 		AddArg(&compileArgs, GCC_SEP_FUNC_SECTIONS);
 		AddArg(&compileArgs, GCC_SEP_DATA_SECTIONS);

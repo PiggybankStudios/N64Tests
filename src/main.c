@@ -13,6 +13,13 @@ Description:
 #include <libdragon.h>
 #include <model64.h>
 
+#define PIG_CORE_IMPLEMENTATION 1
+#include "base/base_defines_check.h"
+#include "base/base_compiler_check.h"
+#include "std/std_includes.h"
+// #include "base/base_assert.h"
+// #include "struct/struct_vectors.h"
+
 // +==============================+
 // |           Headers            |
 // +==============================+

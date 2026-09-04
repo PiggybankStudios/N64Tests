@@ -73,48 +73,36 @@ void Test_Init3dCar()
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	
-	rom.carRotation1 = 0;
+	rom.carModel = model64_load(CAR_MODEL_PATH);
+	
+	rom.carRotation = 0;
 }
 
 void Test_Render3dCar()
 {
-	if (rom.carModel == 0)
-	{
-		debugf("Loading Car model...\n");
-		//TODO: model64_free(model);
-		rom.carModel = model64_load(CAR_MODEL_PATH);
-	}
-	
-	rom.carRotation1 += rom.timeScale * 3.0f;
-	rom.carRotation2 += rom.timeScale * 1.73f;
-	if (rom.carRotation1 >= 360.0f) { rom.carRotation1 -= 360.0f; }
-	if (rom.carRotation2 >= 360.0f) { rom.carRotation2 -= 360.0f; }
+	rom.carRotation += rom.timeScale * 3.0f;
+	if (rom.carRotation >= 360.0f) { rom.carRotation -= 360.0f; }
 	
 	gl_context_begin();
-	
-	glClearColor(0.243f, 0.25f, 0.33f, 1.0f); // BG color
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glTranslatef(0.0f, -0.5f, -3.0f);
-	
-	// update_light_positions();
-	static const GLfloat key_pos[] = {2.5f, 2.0f, 2.5f, 1.0f};
-	static const GLfloat fill_pos[] = {-2.5f, 1.0f, 2.0f, 1.0f};
-	static const GLfloat rim_pos[] = {0.0f, 2.5f, -2.5f, 1.0f};
-	glLightfv(GL_LIGHT0, GL_POSITION, key_pos);
-	glLightfv(GL_LIGHT1, GL_POSITION, fill_pos);
-	glLightfv(GL_LIGHT2, GL_POSITION, rim_pos);
-    
-	glRotatef(rom.carRotation1, rom.carRotation2, 1.0f, 0.0f);
-
-	if (rom.carModel != 0)
 	{
+		glClearColor(0.243f, 0.25f, 0.33f, 1.0f); // BG color
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		// update_light_positions();
+		static const GLfloat key_pos[] = {2.5f, 2.0f, 2.5f, 1.0f};
+		static const GLfloat fill_pos[] = {-2.5f, 1.0f, 2.0f, 1.0f};
+		static const GLfloat rim_pos[] = {0.0f, 2.5f, -2.5f, 1.0f};
+		glLightfv(GL_LIGHT0, GL_POSITION, key_pos);
+		glLightfv(GL_LIGHT1, GL_POSITION, fill_pos);
+		glLightfv(GL_LIGHT2, GL_POSITION, rim_pos);
+		
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glTranslatef(0.0f, -0.5f, -3.0f);
+		glRotatef(rom.carRotation, 0.0f, 1.0f, 0.0f);
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		model64_draw(rom.carModel);
 	}
-	
 	gl_context_end();
 }
 

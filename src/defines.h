@@ -15,6 +15,6 @@ Description:
 
 #define CAR_MODEL_PATH MODELS_FOLDER "/proto_kart2.model64"
 
-#define ENABLE_CAR_RENDER 0
+#define ENABLE_CAR_RENDER 1
 
 #endif //  _DEFINES_H
