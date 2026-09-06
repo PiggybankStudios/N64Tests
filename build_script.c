@@ -47,6 +47,11 @@ int main()
 	IF_WINDOWS(Str aresEmulator = StrLit("F:/Programs/ares-v129/ares" EXE_EXT)); //TODO: Verify this
 	// IF_OSX(Str aresEmulator = StrLit("/Applications/ares.app/Contents/MacOS/ares"));
 	
+	//TODO: Incorporate laptop paths
+	// Str libDragonSrcDir = StrLit("D:/gamedev/downloaded/libdragon");
+	// Str toolchainDir = StrLit("D:/Programs/gcc-toolchain-mips64-win64");
+	// Str sc64deployer = StrLit("D:/Programs/sc64deployer/sc64deployer.exe");
+	
 	Str toolchainBinDir = JoinPathsLit(toolchainDir, "/bin");
 	Str gcc          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-gcc" EXE_EXT);
 	Str gpp          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-g++" EXE_EXT);
