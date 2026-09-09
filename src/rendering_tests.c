@@ -8,6 +8,32 @@ Description:
 	** interact with joypad input, audio output, save data, and other capabilities.
 */
 
+void Test_RenderGradientWithBoxes()
+{
+	for (int y = 0; y < 480; y+=5)
+	{
+		rdpq_set_mode_fill(RGBA32(180, 180, 180+y/2, 0xFF));
+		rdpq_fill_rectangle(0, y, 640, y+5);
+	}
+}
+
+void Test_RenderTypeSizes()
+{
+	int yPos = 50;
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(int)       = %u", sizeof(int));       yPos += 15; //4 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(long)      = %u", sizeof(long));      yPos += 15; //4 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(long long) = %u", sizeof(long long)); yPos += 15; //8 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(float)     = %u", sizeof(float));     yPos += 15; //4 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(double)    = %u", sizeof(double));    yPos += 15; //8 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(char)      = %u", sizeof(char));      yPos += 15; //1 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(void*)     = %u", sizeof(void*));     yPos += 15; //4 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(int*)      = %u", sizeof(int*));      yPos += 15; //4 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(size_t)    = %u", sizeof(size_t));    yPos += 15; //4 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(intptr_t)  = %u", sizeof(intptr_t));  yPos += 15; //4 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(uintptr_t) = %u", sizeof(uintptr_t)); yPos += 15; //4 bytes
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 50, yPos, "sizeof(ptrdiff_t) = %u", sizeof(ptrdiff_t)); yPos += 15; //4 bytes
+}
+
 void Test_RenderDfsEntries()
 {
 	int yPos = 50;
@@ -32,14 +58,16 @@ void Test_RenderDfsEntries()
 	}
 }
 
-#if ENABLE_CAR_RENDER
+// +--------------------------------------------------------------+
+// |                        Car Rendering                         |
+// +--------------------------------------------------------------+
 
 static const GLfloat light_ambient[] = {0.12f, 0.12f, 0.12f, 1.0f};
 static const GLfloat key_diffuse[] = {1.00f, 0.95f, 0.85f, 1.0f};
 static const GLfloat fill_diffuse[] = {0.35f, 0.40f, 0.50f, 1.0f};
 static const GLfloat rim_diffuse[] = {0.60f, 0.60f, 0.70f, 1.0f};
 
-void Test_Init3dCar()
+void Test_Init3dScene()
 {
 	float aspect = (float)display_get_width() / (float)display_get_height();
 	float near_plane = 1.0f;
@@ -74,19 +102,20 @@ void Test_Init3dCar()
 	glEnable(GL_CULL_FACE);
 	
 	rom.carModel = model64_load(CAR_MODEL_PATH);
+	rom.planetModel = model64_load(PLANET_MODEL_PATH);
 	
 	rom.carRotation = 0;
 }
 
-void Test_Render3dCar()
+void Test_Render3dScene()
 {
 	rom.carRotation += rom.timeScale * 3.0f;
 	if (rom.carRotation >= 360.0f) { rom.carRotation -= 360.0f; }
 	
 	gl_context_begin();
 	{
-		glClearColor(0.243f, 0.25f, 0.33f, 1.0f); // BG color
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// glClearColor(0.243f, 0.25f, 0.33f, 1.0f); // BG color
+		glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
 		
 		// update_light_positions();
 		static const GLfloat key_pos[] = {2.5f, 2.0f, 2.5f, 1.0f};
@@ -102,8 +131,11 @@ void Test_Render3dCar()
 		glRotatef(rom.carRotation, 0.0f, 1.0f, 0.0f);
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		model64_draw(rom.carModel);
+		
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glTranslatef(0.0f, 0.0f, 0.0f);
+		model64_draw(rom.planetModel);
 	}
 	gl_context_end();
 }
-
-#endif //ENABLE_CAR_RENDER

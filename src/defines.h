@@ -13,8 +13,7 @@ Description:
 
 #define MODELS_FOLDER "rom:/models"
 
-#define CAR_MODEL_PATH MODELS_FOLDER "/proto_kart2.model64"
-
-#define ENABLE_CAR_RENDER 1
+#define CAR_MODEL_PATH    MODELS_FOLDER "/proto_kart2.model64"
+#define PLANET_MODEL_PATH MODELS_FOLDER "/proto_planet1.model64"
 
 #endif //  _DEFINES_H

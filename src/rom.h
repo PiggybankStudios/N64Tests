@@ -17,7 +17,7 @@ struct RomState
 	bool shutdown;
 	
 	bool rtcAvailable;
-	bool usbDebugAvailable;
+	bool debugOutputAvailable;
 	
 	uint32_t prevRomTime;
 	uint32_t romTime;
@@ -26,10 +26,9 @@ struct RomState
 	
 	joypad_buttons_t prevPadStates[4];
 	
-	#if ENABLE_CAR_RENDER
 	model64_t* carModel;
+	model64_t* planetModel;
 	float carRotation;
-	#endif //ENABLE_CAR_RENDER
 };
 
 extern RomState rom;

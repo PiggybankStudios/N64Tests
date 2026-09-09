@@ -9,6 +9,8 @@ Description:
 #ifndef _BUILD_CONFIG_H
 #define _BUILD_CONFIG_H
 
+#define BUILD_FOR_EMULATOR  0
+
 #define BUILD_WITH_CLAY     0
 #define BUILD_WITH_IMGUI    0
 #define BUILD_WITH_METADESK 0

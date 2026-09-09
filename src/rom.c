@@ -20,8 +20,11 @@ RomState rom = {0};
 void InitRom()
 {
 	// Initialize debug output (both for emulator and for USB serial bus from flash cart)
-	debug_init_emulog();
-	rom.usbDebugAvailable = debug_init_usblog();
+	#if BUILD_FOR_EMULATOR
+	rom.debugOutputAvailable = debug_init_emulog();
+	#else
+	rom.debugOutputAvailable = debug_init_usblog();
+	#endif
 	
 	// Initialize the D File System, let the system find the location using TOC in the rompak
 	int dfsResult = dfs_init(DFS_DEFAULT_LOCATION);
@@ -53,9 +56,7 @@ void InitRom()
 	rom.elapsedMs = 0;
 	rom.timeScale = 1.0f;
 	
-	#if ENABLE_CAR_RENDER
-	Test_Init3dCar();
-	#endif
+	Test_Init3dScene();
 	
 	rom.shutdown = false;
 	rom.initialized = true;
@@ -100,24 +101,16 @@ void RenderRom()
 	// Clear the framebuffer with black
 	rdpq_clear((color_t){59, 58, 50, 0}); // 0x3B3A32
 	
-	for (int y = 0; y < 480; y+=5)
-	{
-		rdpq_set_mode_fill(RGBA32(100, 32+y/4, 100, 0xFF));
-		rdpq_fill_rectangle(0, y, 640, y+5);
-	}
+	Test_RenderGradientWithBoxes();
+	
+	Test_Render3dScene();
 	
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 15, rom.rtcAvailable      ? "RTC: Available"           : "RTC: NOT AVAILABLE"          );
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 25, rom.usbDebugAvailable ? "USB Debugging: Available" : "USB Debugging: NOT AVAILABLE");
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 15, "romTime: %lu,%lums", (rom.romTime/1000), (rom.romTime%1000));
 	
-	char printBuffer[32];
-	snprintf(&printBuffer[0], sizeof(printBuffer), "romTime: %lu", rom.romTime);
-	rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 15, &printBuffer[0]);
-	
-	#if ENABLE_CAR_RENDER
-	Test_Render3dCar();
-	#endif
-	
-	Test_RenderDfsEntries();
+	// Test_RenderDfsEntries();
+	// Test_RenderTypeSizes();
 	
 	// Detach the framebuffer and show it on screen when it's ready
 	// (when previous rendering operations have completed)

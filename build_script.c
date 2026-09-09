@@ -12,8 +12,8 @@ Description:
 
 #define DEBUG_BUILD         1
 #define MAKE_RESOURCES_DFS  0
-#define UPLOAD_TO_SC64      1
-#define START_ARES_EMULATOR 0 // Runs Ares emulator - https://ares-emu.net/
+#define UPLOAD_TO_SC64      0
+#define START_ARES_EMULATOR 1 // Runs Ares emulator - https://ares-emu.net/
 #define INSTALL_TO_SC64     0 // Make sure the console is powered off
 
 #if DEBUG_BUILD
@@ -44,7 +44,8 @@ int main()
 	IF_WINDOWS(Str sc64deployer = StrLit("F:/Programs/sc64deployer/sc64deployer" EXE_EXT));
 	IF_OSX(    Str sc64deployer = StrLit("/Users/robbitay/my/bin/sc64deployer"))
 	
-	IF_WINDOWS(Str aresEmulator = StrLit("F:/Programs/ares-v129/ares" EXE_EXT)); //TODO: Verify this
+	// IF_WINDOWS(Str aresEmulator = StrLit("F:/Programs/ares-v129/ares" EXE_EXT));
+	IF_WINDOWS(Str aresEmulator = StrLit("F:/Programs/ares-v148/ares" EXE_EXT));
 	// IF_OSX(Str aresEmulator = StrLit("/Applications/ares.app/Contents/MacOS/ares"));
 	
 	Str toolchainBinDir = JoinPathsLit(toolchainDir, "/bin");
@@ -168,6 +169,7 @@ int main()
 		AddArgNt(&compileArgs, GCC_WARNING_LEVEL, "all");
 		AddArg(&compileArgs, GCC_WARNINGS_AS_ERRORS);
 		AddArgNt(&compileArgs, GCC_DISABLE_WARNING_AS_ERROR, "deprecated-declarations");
+		AddArgNt(&compileArgs, GCC_DISABLE_WARNING, "unused-value");
 		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-variable");
 		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-but-set-variable");
 		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-function");
