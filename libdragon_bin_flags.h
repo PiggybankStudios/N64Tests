@@ -7,6 +7,8 @@ Date:   08\25\2026
 #ifndef _LIBDRAGON_BIN_FLAGS_H
 #define _LIBDRAGON_BIN_FLAGS_H
 
+#define N64TOOL_EXE "n64tool" EXE_EXT
+
 // mkasset.exe [flags] <input files...>
 //   This tool can be used to compress/decompress arbitrary asset files in a format
 //   that can be loaded by the libdragon library. To open the compressed

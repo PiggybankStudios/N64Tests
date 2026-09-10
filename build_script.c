@@ -10,68 +10,44 @@ Description:
 #include "sc64deployer_flags.h"
 #include "libdragon_bin_flags.h"
 
-#define DEBUG_BUILD         1
-#define MAKE_RESOURCES_DFS  0
-#define UPLOAD_TO_SC64      0
-#define START_ARES_EMULATOR 1 // Runs Ares emulator - https://ares-emu.net/
-#define INSTALL_TO_SC64     0 // Make sure the console is powered off
-
-#if DEBUG_BUILD
-#define IF_DEBUG(...)     __VA_ARGS__
-#define IF_NOT_DEBUG(...) //nothing
-#define IF_RELEASE(...)   //nothing
-#else
-#define IF_DEBUG(...)     //nothing
-#define IF_NOT_DEBUG(...) __VA_ARGS__
-#define IF_RELEASE(...)   __VA_ARGS__
-#endif
-
-#define TOOLCHAIN_PREFIX "mips64-elf"
-#define ROM_NAME         "n64_tests"
-#define ROM_TITLE        "N64 Tests"
+#define MAIN_C_PATH "[ROOT]/src/main.c"
 
 int main()
 {
 	PigBuildDebugMode = false;
 	RecompileIfNeeded(MakeStrArrayVa("../build_script.c", "../sc64deployer_flags.h", "../libdragon_bin_flags.h"));
 	
-	IF_WINDOWS(Str libDragonSrcDir = StrLit("C:/gamedev/downloaded/libdragon-preview"));
-	IF_OSX(    Str libDragonSrcDir = StrLit("/Users/robbitay/my/repos/libdragon"));
+	Str buildConfigContents = ReadEntireFile(StrLit("../src/build_config.h"));
+	Str ROM_NAME               =  ExtractStrDefine(buildConfigContents, StrLit("ROM_NAME"));
+	Str ROM_TITLE              =  ExtractStrDefine(buildConfigContents, StrLit("ROM_TITLE"));
+	bool DEBUG_BUILD           = ExtractBoolDefine(buildConfigContents, StrLit("DEBUG_BUILD"));
+	bool MAKE_RESOURCES_DFS    = ExtractBoolDefine(buildConfigContents, StrLit("MAKE_RESOURCES_DFS"));
+	bool UPLOAD_TO_SC64        = ExtractBoolDefine(buildConfigContents, StrLit("UPLOAD_TO_SC64"));
+	bool START_ARES_EMULATOR   = ExtractBoolDefine(buildConfigContents, StrLit("START_ARES_EMULATOR"));
+	bool INSTALL_TO_SC64       = ExtractBoolDefine(buildConfigContents, StrLit("INSTALL_TO_SC64"));
+	Str TOOLCHAIN_PREFIX       =  ExtractStrDefine(buildConfigContents, StrLit("TOOLCHAIN_PREFIX"));
+	Str LIB_DRAGON_DIR         =  ExtractStrDefine(buildConfigContents, StrLit("LIB_DRAGON_DIR"));
+	Str MIPS_GCC_TOOLCHAIN_DIR =  ExtractStrDefine(buildConfigContents, StrLit("MIPS_GCC_TOOLCHAIN_DIR"));
+	Str LIB_DRAGON_TOOLS_DIR   =  ExtractStrDefine(buildConfigContents, StrLit("LIB_DRAGON_TOOLS_DIR"));
+	Str SC64DEPLOYER_PATH      =  ExtractStrDefine(buildConfigContents, StrLit("SC64DEPLOYER_PATH"));
+	Str ARES_PATH              =  ExtractStrDefine(buildConfigContents, StrLit("ARES_PATH"));
 	
-	IF_WINDOWS(Str toolchainDir = StrLit("F:/Programs/libdragon"));
-	IF_OSX(    Str toolchainDir = StrLit("/opt/libdragon"));
+	Str toolchainBinDir = JoinPathsLit(MIPS_GCC_TOOLCHAIN_DIR, "/bin");
+	Str gcc             = JoinPaths(toolchainBinDir, JoinStrings2(TOOLCHAIN_PREFIX, StrLit("-gcc" EXE_EXT)));
+	Str gpp             = JoinPaths(toolchainBinDir, JoinStrings2(TOOLCHAIN_PREFIX, StrLit("-g++" EXE_EXT)));
+	Str ld              = JoinPaths(toolchainBinDir, JoinStrings2(TOOLCHAIN_PREFIX, StrLit("-ld" EXE_EXT)));
+	Str clang           = StrLit("clang" EXE_EXT);
+	Str ld_lld          = StrLit("ld.lld" EXE_EXT);
+	Str n64tool         = JoinPathsLit(LIB_DRAGON_TOOLS_DIR, N64TOOL_EXE);
+	Str mkmodel         = JoinPathsLit(LIB_DRAGON_TOOLS_DIR, MKMODEL_EXE);
+	Str mksprite        = JoinPathsLit(LIB_DRAGON_TOOLS_DIR, MKSPRITE_EXE);
+	Str mkdfs           = JoinPathsLit(LIB_DRAGON_TOOLS_DIR, MKDFS_EXE);
 	
-	IF_WINDOWS(Str sc64deployer = StrLit("F:/Programs/sc64deployer/sc64deployer" EXE_EXT));
-	IF_OSX(    Str sc64deployer = StrLit("/Users/robbitay/my/bin/sc64deployer"))
-	
-	// IF_WINDOWS(Str aresEmulator = StrLit("F:/Programs/ares-v129/ares" EXE_EXT));
-	IF_WINDOWS(Str aresEmulator = StrLit("F:/Programs/ares-v148/ares" EXE_EXT));
-	// IF_OSX(Str aresEmulator = StrLit("/Applications/ares.app/Contents/MacOS/ares"));
-	
-	//TODO: Incorporate laptop paths
-	// Str libDragonSrcDir = StrLit("D:/gamedev/downloaded/libdragon");
-	// Str toolchainDir = StrLit("D:/Programs/gcc-toolchain-mips64-win64");
-	// Str sc64deployer = StrLit("D:/Programs/sc64deployer/sc64deployer.exe");
-	
-	Str toolchainBinDir = JoinPathsLit(toolchainDir, "/bin");
-	Str gcc          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-gcc" EXE_EXT);
-	Str gpp          = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-g++" EXE_EXT);
-	// Str ld           = JoinPathsLit(toolchainBinDir, TOOLCHAIN_PREFIX "-ld" EXE_EXT);
-	Str n64tool      = JoinPathsLit(toolchainBinDir, "n64tool" EXE_EXT);;
-	Str mkmodel      = JoinPathsLit(toolchainBinDir, MKMODEL_EXE);
-	Str mksprite     = JoinPathsLit(toolchainBinDir, MKSPRITE_EXE);
-	Str mkdfs        = JoinPathsLit(toolchainBinDir, MKDFS_EXE);
-	
-	Str mainPath = StrLit("[ROOT]/src/main.c");
-	// Str mainPath = JoinPathsLit(libDragonSrcDir, "/examples/ctest/ctest.c");
-	// Str mainPath = JoinPathsLit(libDragonSrcDir, "/examples/helloworld/src/main.c");
-	// Str mainPath = JoinPathsLit(libDragonSrcDir, "/examples/mixertest/mixertest.c");
-	
-	Str mainFilename = GetFileNamePart(mainPath, true);
-	Str oFilename = ChangePathExtension(mainFilename, StrLit(".o"), true);
-	Str mapFilename = ChangePathExtension(mainFilename, StrLit(".map"), true);
-	Str elfFilename = ChangePathExtension(mainFilename, StrLit(".elf"), true);
-	Str romFilename = StrLit(ROM_NAME ".z64");
+	Str mainFilename = GetFileNamePart(StrLit(MAIN_C_PATH), true);
+	Str oFilename    = ChangePathExtension(mainFilename, StrLit(".o"), true);
+	Str mapFilename  = ChangePathExtension(mainFilename, StrLit(".map"), true);
+	Str elfFilename  = ChangePathExtension(mainFilename, StrLit(".elf"), true);
+	Str romFilename  = JoinStrings2(ROM_NAME, StrLit(".z64"));
 	
 	// +==============================+
 	// |     Make Resources .dfs      |
@@ -110,7 +86,7 @@ int main()
 					AddArgStr(&mkModelArgs, MKMODEL_OUTPUT, modelsOutputDir);
 					AddArg(&mkModelArgs, MKMODEL_NO_ANIM_STREAMING);
 					AddArgNt(&mkModelArgs, MKMODEL_COMPRESS, "0");
-					IF_DEBUG(AddArg(&mkModelArgs, MKMODEL_VERBOSE));
+					if (DEBUG_BUILD) { AddArg(&mkModelArgs, MKMODEL_VERBOSE); }
 					AddArgStr(&mkModelArgs, CLI_QUOTED_ARG, path);
 					RunCliProgramAndExitOnFailure(mkmodel, &mkModelArgs, FormatStr("Failed to convert \"%.*s\"", StrPrint(filename)));
 					AssertFileExist(outputFilePath, false);
@@ -126,7 +102,7 @@ int main()
 					mkSpriteArgs.pathSepChar = '/';
 					AddArgNt(&mkSpriteArgs, MKSPRITE_OUTPUT, "filesystem/models");
 					AddArgNt(&mkSpriteArgs, MKSPRITE_FORMAT, "RGBA16");
-					IF_DEBUG(AddArg(&mkSpriteArgs, MKSPRITE_VERBOSE));
+					if (DEBUG_BUILD) { AddArg(&mkSpriteArgs, MKSPRITE_VERBOSE); }
 					AddArgStr(&mkSpriteArgs, CLI_QUOTED_ARG, path);
 					RunCliProgramAndExitOnFailure(mksprite, &mkSpriteArgs, FormatStr("Failed to convert \"%.*s\"", StrPrint(filename)));
 					AssertFileExist(outputFilePath, false);
@@ -149,13 +125,13 @@ int main()
 		
 		CliArgs compileArgs = EMPTY;
 		AddArg(&compileArgs, GCC_COMPILE);
-		AddArgStr(&compileArgs, CLI_QUOTED_ARG, mainPath);
+		AddArgStr(&compileArgs, CLI_QUOTED_ARG, StrLit(MAIN_C_PATH));
 		AddArgStr(&compileArgs, GCC_OUTPUT_FILE, oFilename);
-		IF_NOT_DEBUG(AddDefineArgLit(&compileArgs, "NDEBUG"));
+		if (!DEBUG_BUILD) { AddDefineArgLit(&compileArgs, "NDEBUG"); }
 		AddDefineArgLit(&compileArgs, "LIBDRAGON_PREVIEW=2");
 		AddIncludeDirArgLit(&compileArgs, "[ROOT]/src");
 		AddIncludeDirArgLit(&compileArgs, "[ROOT]/core/src");
-		AddIncludeDirArgStr(&compileArgs, JoinPaths(libDragonSrcDir, StrLit("/include")));
+		AddIncludeDirArgStr(&compileArgs, JoinPaths(LIB_DRAGON_DIR, StrLit("/include")));
 		AddArg(&compileArgs, "-march=vr4300");
 		AddArg(&compileArgs, "-mtune=vr4300");
 		AddArg(&compileArgs, "-mabi=o64");
@@ -205,13 +181,13 @@ int main()
 		AddArgStr(&linkerArgs, CLI_QUOTED_ARG, oFilename);
 		AddArgStr(&linkerArgs, GCC_OUTPUT_FILE, elfFilename);
 		AddArg(&linkerArgs, "-mabi=o64");
-		AddArgStr(&linkerArgs, "-Wl," GCC_LIBRARY_DIR, JoinPathsLit(toolchainDir, "/" TOOLCHAIN_PREFIX "/lib"));
+		AddArgStr(&linkerArgs, "-Wl," GCC_LIBRARY_DIR, JoinPaths3Lit(MIPS_GCC_TOOLCHAIN_DIR, TOOLCHAIN_PREFIX, "lib"));
 		AddArgNt(&linkerArgs, GCC_SYSTEM_LIBRARY, "c");
 		AddArgNt(&linkerArgs, GCC_SYSTEM_LIBRARY, "dragon");
 		AddArgNt(&linkerArgs, GCC_SYSTEM_LIBRARY, "m");
 		// AddArgNt(&linkerArgs, GCC_SYSTEM_LIBRARY, "g");
 		AddArgNt(&linkerArgs, GCC_SYSTEM_LIBRARY, "dragonsys");
-		AddArgStr(&linkerArgs, "-Wl," GCC_LINKER_SCRIPT, JoinPathsLit(libDragonSrcDir, "/n64.ld"));
+		AddArgStr(&linkerArgs, "-Wl," GCC_LINKER_SCRIPT, JoinPathsLit(LIB_DRAGON_DIR, "/n64.ld"));
 		AddArg(&linkerArgs, GCC_GC_SECTIONS);
 		AddArg(&linkerArgs, "-Wl,--wrap __do_global_ctors");
 		AddArgStr(&linkerArgs, GCC_MAP_FILE, mapFilename);
@@ -236,7 +212,7 @@ int main()
 		//TODO: n64elfcompress on the stripped .elf
 		
 		CliArgs toolArgs = EMPTY;
-		AddArgNt(&toolArgs, "--title \"[VAL]\"", ROM_TITLE);
+		AddArgStr(&toolArgs, "--title \"[VAL]\"", ROM_TITLE);
 		// AddArgNt(&toolArgs, "--header \"[VAL]\"", ROM_HEADER);
 		// AddArgNt(&toolArgs, "--category \"[VAL]\"", ROM_CATEGORY);
 		// AddArgNt(&toolArgs, "--region \"[VAL]\"", ROM_REGION);
@@ -263,7 +239,7 @@ int main()
 		AddArg(&uploadArgs, SC64_CMD_UPLOAD);
 		AddArg(&uploadArgs, SC64_UPLOAD_OPTION_REBOOT); //TODO: What do we need to do in order to get this working? Warning says: no response for [Reboot] AUX message
 		AddArgStr(&uploadArgs, CLI_QUOTED_ARG, romFilename);
-		RunCliProgramAndExitOnFailure(sc64deployer, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 with sc64deployer"));
+		RunCliProgramAndExitOnFailure(SC64DEPLOYER_PATH, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 with sc64deployer"));
 	}
 	
 	// +==============================+
@@ -276,7 +252,7 @@ int main()
 		AddArg(&uploadArgs, SC64_CMD_SD);
 		AddArg(&uploadArgs, SC64_SD_SUBCMD_UPLOAD);
 		AddArgStr(&uploadArgs, CLI_QUOTED_ARG, romFilename);
-		RunCliProgramAndExitOnFailure(sc64deployer, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 SD Card with sc64deployer"));
+		RunCliProgramAndExitOnFailure(SC64DEPLOYER_PATH, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 SD Card with sc64deployer"));
 	}
 	
 	// +==============================+
@@ -287,7 +263,7 @@ int main()
 		#if BUILDING_ON_WINDOWS
 		CliArgs emuArgs = EMPTY;
 		AddArgStr(&emuArgs, CLI_QUOTED_ARG, romFilename);
-		RunCliProgramAndExitOnFailure(aresEmulator, &emuArgs, StrLit("Failed to start Ares emulator!"));
+		RunCliProgramAndExitOnFailure(ARES_PATH, &emuArgs, StrLit("Failed to start Ares emulator!"));
 		#elif BUILDING_ON_OSX
 		CliArgs emuArgs = EMPTY;
 		AddArg(&emuArgs, "-a"); //Open an installed app by name
