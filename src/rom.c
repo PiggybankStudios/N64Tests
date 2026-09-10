@@ -26,6 +26,8 @@ void InitRom()
 	rom.debugOutputAvailable = debug_init_usblog();
 	#endif
 	
+	PerformUnlockSequenceSC64();
+	
 	// Initialize the D File System, let the system find the location using TOC in the rompak
 	int dfsResult = dfs_init(DFS_DEFAULT_LOCATION);
 	debugf("dfsResult = %d\n", dfsResult);
@@ -68,19 +70,26 @@ void InitRom()
 // +--------------------------------------------------------------+
 void UpdateRom()
 {
+	if (PollAuxSC64()) { rom.halt = true; return; } //return if HALT has been received
 	joypad_poll();
+	
 	joypad_buttons_t pads[4];
-	pads[0] = joypad_get_buttons_pressed(JOYPAD_PORT_1);
-	pads[1] = joypad_get_buttons_pressed(JOYPAD_PORT_2);
-	pads[2] = joypad_get_buttons_pressed(JOYPAD_PORT_3);
-	pads[3] = joypad_get_buttons_pressed(JOYPAD_PORT_4);
+	pads[0] = joypad_get_buttons(JOYPAD_PORT_1);
+	pads[1] = joypad_get_buttons(JOYPAD_PORT_2);
+	pads[2] = joypad_get_buttons(JOYPAD_PORT_3);
+	pads[3] = joypad_get_buttons(JOYPAD_PORT_4);
 	
 	rom.prevRomTime = rom.romTime;
 	rom.romTime = get_ticks_ms();
 	rom.elapsedMs = (rom.romTime >= rom.prevRomTime) ? (rom.romTime - rom.prevRomTime) : 0;
 	rom.timeScale = ((float)rom.elapsedMs / 33.0f);
 	
-	if (pads[0].a && !rom.prevPadStates[0].a) { debugf("A Button was Pressed!\n"); }
+	if (pads[0].a && !rom.prevPadStates[0].a)
+	{
+		debugf("A Button was Pressed!\n");
+	}
+	
+	Test_Update3dScene(&pads[0]);
 	
 	rom.prevPadStates[0] = pads[0];
 	rom.prevPadStates[1] = pads[1];
@@ -93,6 +102,8 @@ void UpdateRom()
 // +--------------------------------------------------------------+
 void RenderRom()
 {
+	if (rom.shutdown || rom.halt) { return; }
+	
 	// Acquire a free framebuffer for rendering
 	surface_t* disp = display_get();
 	surface_t* zbuf = display_get_zbuf();

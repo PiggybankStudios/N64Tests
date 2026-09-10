@@ -14,6 +14,7 @@ typedef struct RomState RomState;
 struct RomState
 {
 	bool initialized;
+	bool halt;
 	bool shutdown;
 	
 	bool rtcAvailable;
@@ -29,6 +30,9 @@ struct RomState
 	model64_t* carModel;
 	model64_t* planetModel;
 	float carRotation;
+	v3 origPlanetOffset;
+	v3 planetOffset;
+	v3 planetOffsetGoto;
 };
 
 extern RomState rom;

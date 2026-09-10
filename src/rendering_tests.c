@@ -103,15 +103,44 @@ void Test_Init3dScene()
 	
 	rom.carModel = model64_load(CAR_MODEL_PATH);
 	rom.planetModel = model64_load(PLANET_MODEL_PATH);
+	rom.origPlanetOffset = MakeV3(1.5f, 2.5f, -11.0f);
+	rom.planetOffset = rom.origPlanetOffset;
+	rom.planetOffsetGoto = rom.planetOffset;
 	
 	rom.carRotation = 0;
 }
 
-void Test_Render3dScene()
+void Test_Update3dScene(joypad_buttons_t* pads)
 {
-	rom.carRotation += rom.timeScale * 3.0f;
+	rom.carRotation += rom.timeScale * 2.0f;
 	if (rom.carRotation >= 360.0f) { rom.carRotation -= 360.0f; }
 	
+	if (pads[0].z && !rom.prevPadStates[0].z)
+	{
+		rom.planetOffset = rom.origPlanetOffset;
+		rom.planetOffsetGoto = rom.planetOffset;
+	}
+	#define PLANET_DBG_MOVE_SPEED 0.5f
+	if (pads[0].d_right) { rom.planetOffsetGoto.x -= PLANET_DBG_MOVE_SPEED; }
+	if (pads[0].d_down)  { rom.planetOffsetGoto.z -= PLANET_DBG_MOVE_SPEED; }
+	if (pads[0].d_left)  { rom.planetOffsetGoto.x += PLANET_DBG_MOVE_SPEED; }
+	if (pads[0].d_up)    { rom.planetOffsetGoto.z += PLANET_DBG_MOVE_SPEED; }
+	if (pads[0].r)       { rom.planetOffsetGoto.y -= PLANET_DBG_MOVE_SPEED; }
+	if (pads[0].l)       { rom.planetOffsetGoto.y += PLANET_DBG_MOVE_SPEED; }
+	
+	v3 planetOffsetDiff = SubV3(rom.planetOffsetGoto, rom.planetOffset);
+	if (LengthSquaredV3(planetOffsetDiff) > 0.01f)
+	{
+		rom.planetOffset = AddV3(rom.planetOffset, ShrinkV3(planetOffsetDiff, 7.0f));
+	}
+	else
+	{
+		rom.planetOffset = rom.planetOffsetGoto;
+	}
+}
+
+void Test_Render3dScene()
+{
 	gl_context_begin();
 	{
 		// glClearColor(0.243f, 0.25f, 0.33f, 1.0f); // BG color
@@ -134,7 +163,7 @@ void Test_Render3dScene()
 		
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		glTranslatef(0.0f, 0.0f, 0.0f);
+		glTranslatef(rom.planetOffset.x, rom.planetOffset.y, rom.planetOffset.z);
 		model64_draw(rom.planetModel);
 	}
 	gl_context_end();

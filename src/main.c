@@ -12,6 +12,13 @@ Description:
 #include "base/base_compiler_check.h"
 #include "std/std_includes.h"
 
+#include "base/base_typedefs.h"
+#include "base/base_assert.h"
+#include "struct/struct_vectors.h"
+#include "struct/struct_matrices.h"
+#include "struct/struct_quaternion.h"
+#include "struct/struct_rectangles.h"
+
 // #include "base/base_all.h"
 // #include "struct/struct_all.h"
 
@@ -24,6 +31,7 @@ Description:
 // +==============================+
 // |         Source Files         |
 // +==============================+
+#include "sc64.c"
 #include "rendering_tests.c"
 #include "rom.c"
 
