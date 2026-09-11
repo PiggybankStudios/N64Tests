@@ -31,6 +31,7 @@ Description:
 // +==============================+
 // |         Source Files         |
 // +==============================+
+#include "reboot.c"
 #include "sc64.c"
 #include "rendering_tests.c"
 #include "rom.c"

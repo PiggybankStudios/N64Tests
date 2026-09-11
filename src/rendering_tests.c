@@ -112,7 +112,7 @@ void Test_Init3dScene()
 
 void Test_Update3dScene(joypad_buttons_t* pads)
 {
-	rom.carRotation += rom.timeScale * 2.0f;
+	rom.carRotation += rom.timeScale * 3.0f;
 	if (rom.carRotation >= 360.0f) { rom.carRotation -= 360.0f; }
 	
 	if (pads[0].z && !rom.prevPadStates[0].z)

@@ -26,7 +26,7 @@ void InitRom()
 	rom.debugOutputAvailable = debug_init_usblog();
 	#endif
 	
-	PerformUnlockSequenceSC64();
+	SC64_PerformUnlockSequence();
 	
 	// Initialize the D File System, let the system find the location using TOC in the rompak
 	int dfsResult = dfs_init(DFS_DEFAULT_LOCATION);
@@ -70,7 +70,7 @@ void InitRom()
 // +--------------------------------------------------------------+
 void UpdateRom()
 {
-	if (PollAuxSC64()) { rom.halt = true; return; } //return if HALT has been received
+	if (SC64_PollAUX()) { rom.halt = true; return; } //return if HALT has been received
 	joypad_poll();
 	
 	joypad_buttons_t pads[4];

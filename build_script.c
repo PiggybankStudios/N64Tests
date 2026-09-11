@@ -160,6 +160,7 @@ int main()
 		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-local-typedefs");
 		AddArgNt(&compileArgs, DEBUG_BUILD ? GCC_DISABLE_WARNING : GCC_DISABLE_WARNING_AS_ERROR, "unused-const-variable");
 		AddArg(&compileArgs, "-ftrivial-auto-var-init=pattern");
+		AddArg(&compileArgs, "-G0"); //Dsiable small-data sections, so things are always addressed absolutely, rather than relative paths. Ran into a problem when writing assembly code in sc64.c
 		AddArgNt(&compileArgs, GCC_LANG_VERSION, "gnu17");
 		
 		StrArray tags = EMPTY;
