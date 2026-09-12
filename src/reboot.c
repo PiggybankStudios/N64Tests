@@ -123,9 +123,15 @@ void SoftRebootN64()
 {
 	disable_interrupts();
 	u32 tvType = get_tv_type();
-	const u32 seed = 0x3F; //6102 CIC seed (6102/7101 = 0x3F). Must match the target ROM. TODO: Why do we use this seed? Do we ever need to choose a different one?
+	// CIC seed (6102/7101 = 0x3F). Must match the target ROM. TODO: Why do we use this seed? Do we ever need to choose a different one?
+	const u32 cicSeed = 0x3F;
 	
-	__asm__ volatile ("li $t0,0x34000000\n mtc0 $t0,$12\n" ::: "t0"); // CU1|CU0|FR
+	// CU1|CU0|FR
+	__asm__ volatile (
+		"li $t0,0x34000000\n"
+		"mtc0 $t0,$12\n"
+		::: "t0"
+	); 
 	
 	// Stop the RSP
 	while (!(REG_SP_STATUS & REG_SP_STATUS_BIT_HALT)) { } // wait for HALT signal
@@ -184,15 +190,16 @@ void SoftRebootN64()
 	register u32 s3 __asm__("s3") = 0; //0=cart, 1=device (TODO: For 64DD support maybe? Is it even used in the assembly code above?) 
 	register u32 s4 __asm__("s4") = (tvType & 3);
 	register u32 s5 __asm__("s5") = 1; //0=Full reset 1=Fast reset (Keep RDRAM mapping)
-	register u32 s6 __asm__("s6") = seed;
+	register u32 s6 __asm__("s6") = cicSeed;
 	register u32 s7 __asm__("s7") = (tvType==0 ? 6u : (tvType==1 ? 1u : (tvType==2 ? 4u : 0u)));
-	
 	__asm__ volatile (
 		".set noreorder \n"
 		"li $t3, reboot \n" // We use "li" here because the assembly is in this file, same compilation unit, absolute address
 		"jr $t3         \n"
 		"nop            \n"
 		".set reorder   \n"
-		:: "r"(s3),"r"(s4),"r"(s5),"r"(s6),"r"(s7) : "t3");
+		:: "r"(s3),"r"(s4),"r"(s5),"r"(s6),"r"(s7) : "t3"
+	);
+	
 	__builtin_unreachable();
 }

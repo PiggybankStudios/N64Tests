@@ -102,6 +102,8 @@ void Test_Init3dScene()
 	glEnable(GL_CULL_FACE);
 	
 	rom.carModel = model64_load(CAR_MODEL_PATH);
+	// rom.carModel = model64_load(ERROR_MODEL_PATH);
+	// rom.carModel = model64_load(UNIT_BOX_MODEL_PATH);
 	rom.planetModel = model64_load(PLANET_MODEL_PATH);
 	rom.origPlanetOffset = MakeV3(1.5f, 2.5f, -11.0f);
 	rom.planetOffset = rom.origPlanetOffset;
@@ -112,7 +114,7 @@ void Test_Init3dScene()
 
 void Test_Update3dScene(joypad_buttons_t* pads)
 {
-	rom.carRotation += rom.timeScale * 3.0f;
+	rom.carRotation += rom.timeScale * 5.0f;
 	if (rom.carRotation >= 360.0f) { rom.carRotation -= 360.0f; }
 	
 	if (pads[0].z && !rom.prevPadStates[0].z)
@@ -156,7 +158,7 @@ void Test_Render3dScene()
 		
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		glTranslatef(0.0f, -0.5f, -3.0f);
+		glTranslatef(0.0f, -1.5f, -3.0f);
 		glRotatef(rom.carRotation, 0.0f, 1.0f, 0.0f);
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		model64_draw(rom.carModel);
@@ -165,6 +167,9 @@ void Test_Render3dScene()
 		glLoadIdentity();
 		glTranslatef(rom.planetOffset.x, rom.planetOffset.y, rom.planetOffset.z);
 		model64_draw(rom.planetModel);
+		
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 	}
 	gl_context_end();
 }

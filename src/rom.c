@@ -87,6 +87,12 @@ void UpdateRom()
 	if (pads[0].a && !rom.prevPadStates[0].a)
 	{
 		debugf("A Button was Pressed!\n");
+		rom.planetCollision = LoadPlanetCollision(StrLit(UNIT_BOX_MODEL_PATH));
+		debugf("collision has %lu faces\n", rom.planetCollision.numFaces);
+		debugf("collision bounds=(%g,%g,%g, %g,%g,%g)\n",
+			rom.planetCollision.bounds.x, rom.planetCollision.bounds.y, rom.planetCollision.bounds.z,
+			rom.planetCollision.bounds.width, rom.planetCollision.bounds.height, rom.planetCollision.bounds.depth
+		);
 	}
 	if (pads[0].z && !rom.prevPadStates[0].z)
 	{

@@ -29,7 +29,10 @@ struct RomState
 	
 	model64_t* carModel;
 	model64_t* planetModel;
+	PlanetCollision planetCollision;
+	
 	float carRotation;
+	
 	v3 origPlanetOffset;
 	v3 planetOffset;
 	v3 planetOffsetGoto;
