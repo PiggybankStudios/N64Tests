@@ -100,103 +100,96 @@ __asm__ (
     ".text                                                        \n"
 );
 
-extern uint32_t reboot_start;
-extern uint32_t reboot_end;
+extern u32 reboot_start;
+extern u32 reboot_end;
 
 /* ------------------------------------------------------------------ *
  *  RCP register access (uncached KSEG1). RCP regs are on the system
  *  bus (no PI wait). Cart/ROM/SC64 regs are on the PI bus (busy-wait).
  * ------------------------------------------------------------------ */
-#define REGISTER(address) (*(volatile uint32_t*)(uintptr_t)(address))
+static inline u32 BlockingPiRead(volatile u32* regPntr)
+{
+	while (REG_PI_STATUS & (REG_PI_STATUS_BIT_DMA_BUSY | REG_PI_STATUS_BIT_IO_BUSY)) { }
+	return *regPntr;
+}
+static inline void BlockingPiWrite(volatile u32* regPntr, u32 regValue)
+{
+	while (REG_PI_STATUS & (REG_PI_STATUS_BIT_DMA_BUSY | REG_PI_STATUS_BIT_IO_BUSY)) { }
+	*regPntr = regValue;
+}
 
-#define REG_ADDR_SP_SR       0xA4040010u
-#define REG_ADDR_SP_DMA_BUSY 0xA4040018u
-#define REG_ADDR_SP_SEM      0xA404001Cu
-#define REG_ADDR_SP_PC       0xA4080000u
-#define REG_ADDR_DPC_SR      0xA410000Cu
-#define REG_ADDR_VI_V_INTR   0xA440000Cu
-#define REG_ADDR_VI_CUR_LINE 0xA4400010u
-#define REG_ADDR_VI_H_LIMITS 0xA4400024u
-#define REG_ADDR_AI_MADDR    0xA4500000u
-#define REG_ADDR_AI_LEN      0xA4500004u
-#define REG_ADDR_PI_SR       0xA4600010u
-#define REG_ADDR_PI_DOM0_LAT 0xA4600014u   /* LAT, PWD, PGS, RLS at +0,4,8,C */
-#define REG_ADDR_PI_DOM0_PWD 0xA4600018u
-#define REG_ADDR_PI_DOM0_PGS 0xA460001Cu
-#define REG_ADDR_PI_DOM0_RLS 0xA4600020u
-#define REG_ADDR_SI_SR       0xA4800018u
-
-#define PI_BUSY     0x3u          /* DMA_BUSY | IO_BUSY */
-
-static inline uint32_t BlockingPiRead(uint32_t a){ while (REGISTER(REG_ADDR_PI_SR)&PI_BUSY){} return REGISTER(a); }
-static inline void     BlockingPiWrite(uint32_t a, uint32_t v){ while (REGISTER(REG_ADDR_PI_SR)&PI_BUSY){} REGISTER(a)=v; }
-
-// clear SIG0..7 | INTR_BREAK | SSTEP | INTR | BROKE | SET_HALT
-#define SP_HALT_WRITE 0x00AAAAAEu
-
-// ------------------------------------------------------------------
 // Re-runs the boot process from IPL3 on without powering off
-//    device:     0 = cart (0xB0000000), 1 = 64DD IPL (0xB6000000)
-//    fastReset:  0 = cold (reset RDRAM), 1 = NMI/fast (keep RDRAM)
-//    seed:       CIC seed (6102/7101 = 0x3F). Must match the target ROM.
-// ------------------------------------------------------------------
-void SoftRebootN64(uint32_t device, uint32_t fastReset, uint32_t seed)
+void SoftRebootN64()
 {
 	disable_interrupts();
-	uint32_t tvType = get_tv_type();
+	u32 tvType = get_tv_type();
+	const u32 seed = 0x3F; //6102 CIC seed (6102/7101 = 0x3F). Must match the target ROM. TODO: Why do we use this seed? Do we ever need to choose a different one?
 	
 	__asm__ volatile ("li $t0,0x34000000\n mtc0 $t0,$12\n" ::: "t0"); // CU1|CU0|FR
 	
-	while (!(REGISTER(REG_ADDR_SP_SR) & (1u<<0))) {}          // wait SP HALT
-	REGISTER(REG_ADDR_SP_SR) = SP_HALT_WRITE;
-	REGISTER(REG_ADDR_SP_SEM) = 0;
-	REGISTER(REG_ADDR_SP_PC)  = 0;
-	while (REGISTER(REG_ADDR_SP_DMA_BUSY)) {}
+	// Stop the RSP
+	while (!(REG_SP_STATUS & REG_SP_STATUS_BIT_HALT)) { } // wait for HALT signal
+	REG_SP_STATUS = (
+		REG_SP_STATUS_BIT_SET_HALT |
+		REG_SP_STATUS_BIT_CLEAR_BROKE |
+		REG_SP_STATUS_BIT_CLEAR_INTR |
+		REG_SP_STATUS_BIT_CLEAR_SSTEP |
+		REG_SP_STATUS_BIT_CLEAR_INTR_ON_BREAK |
+		REG_SP_STATUS_BIT_CLEAR_SIGNAL0 | REG_SP_STATUS_BIT_CLEAR_SIGNAL1 | REG_SP_STATUS_BIT_CLEAR_SIGNAL2 | REG_SP_STATUS_BIT_CLEAR_SIGNAL3 |
+		REG_SP_STATUS_BIT_CLEAR_SIGNAL4 | REG_SP_STATUS_BIT_CLEAR_SIGNAL5 | REG_SP_STATUS_BIT_CLEAR_SIGNAL6 | REG_SP_STATUS_BIT_CLEAR_SIGNAL7
+	);
+	REG_SP_SEMAPHORE = 0; //Set semaphore by writing
+	REG_SP_PC = 0; //Set the program counter to 0
+	while (REG_SP_DMA_BUSY & REG_SP_DMA_BUSY_BIT_HALT) { }
 	
-	REGISTER(REG_ADDR_PI_SR) = (1u<<1)|(1u<<0);               // CLR_INTR | RESET
-	REGISTER(REG_ADDR_SI_SR) = 0;
-	while ((REGISTER(REG_ADDR_VI_CUR_LINE) & ~1u) != 0) {}    // mask VI_CURR_LINE_FIELD
-	REGISTER(REG_ADDR_VI_V_INTR)   = 0x3FF;
-	REGISTER(REG_ADDR_VI_H_LIMITS) = 0;
-	REGISTER(REG_ADDR_VI_CUR_LINE) = 0;
-	REGISTER(REG_ADDR_AI_MADDR)    = 0;
-	REGISTER(REG_ADDR_AI_LEN)      = 0;
-	while (REGISTER(REG_ADDR_SP_SR) & (1u<<2)) {}             // SP DMA_BUSY
+	REG_PI_STATUS = (REG_PI_STATUS_BIT_RESET_DMA | REG_PI_STATUS_BIT_CLR_INTR);
 	
-	// copy trampoline into RSP IMEM
-	volatile uint32_t* imem = (volatile uint32_t*)(uintptr_t)0xA4001000u;
-	uint32_t *src   = &reboot_start;
-	size_t    words = (size_t)(&reboot_end - &reboot_start);
-	for (size_t i = 0; i < words; i++) imem[i] = src[i];
+	REG_SI_STATUS = 0;
+	while ((REG_VI_CUR_LINE & REG_VI_CUR_LINE_CURRENT_MASK) != 0) { }
+	REG_VI_V_INTR = REG_VI_V_INTR_MASK; //Set the VI interrupt threshold to the default value (libdragon will set it back to '2' during initialization)
+	REG_VI_H_LIMITS = 0;
+	REG_VI_CUR_LINE = 0;
+	REG_AI_DRAM_ADDR = 0; REG_AI_DRAM_LEN = 0; //Clear DMA address/size on Audio Interface (AI)
+	while (REG_SP_STATUS & REG_SP_STATUS_BIT_DMA_BUSY) { } // wait for DMA_BUSY to go false
 	
-	// set PI DOM0 timing from the target ROM header, via safe defaults first
-	uint32_t base = device ? 0xB6000000u : 0xB0000000u;
-	BlockingPiWrite(REG_ADDR_PI_DOM0_LAT, 0xFF); BlockingPiWrite(REG_ADDR_PI_DOM0_PWD, 0xFF);
-	BlockingPiWrite(REG_ADDR_PI_DOM0_PGS, 0x0F); BlockingPiWrite(REG_ADDR_PI_DOM0_RLS, 0x03);
-	uint32_t cfg = BlockingPiRead(base);
-	BlockingPiWrite(REG_ADDR_PI_DOM0_LAT, cfg & 0xFF);
-	BlockingPiWrite(REG_ADDR_PI_DOM0_PWD, (cfg >> 8)  & 0xFF);
-	BlockingPiWrite(REG_ADDR_PI_DOM0_PGS, (cfg >> 16) & 0xFF);
-	BlockingPiWrite(REG_ADDR_PI_DOM0_RLS, (cfg >> 20) & 0xFF);
+	// Copy trampoline into RSP IMEM
+	volatile u32* imem = (volatile u32*)(uintptr_t)(KSEG1_START_ADDR + RSP_MEMORY_BASE + RSP_IMEM_START);
+	u32 *src = &reboot_start;
+	size_t words = (size_t)(&reboot_end - &reboot_start);
+	for (size_t i = 0; i < words; i++) { imem[i] = src[i]; }
 	
-	if (REGISTER(REG_ADDR_DPC_SR) & (1u<<0))                  // XBUS_DMEM_DMA
+	// Set PI DOM0 timing from the target ROM header, via safe defaults first
+	u32 romHeaderBase = (KSEG1_START_ADDR + 0x10000000u);
+	BlockingPiWrite(&REG_PI_DOM0_LAT, 0xFF);
+	BlockingPiWrite(&REG_PI_DOM0_PWD, 0xFF);
+	BlockingPiWrite(&REG_PI_DOM0_PGS, 0x0F);
+	BlockingPiWrite(&REG_PI_DOM0_RLS, 0x03);
+	u32 romHeaderConfig = BlockingPiRead((volatile u32*)romHeaderBase);
+	BlockingPiWrite(&REG_PI_DOM0_LAT, (romHeaderConfig >>  0) & 0xFF);
+	BlockingPiWrite(&REG_PI_DOM0_PWD, (romHeaderConfig >>  8) & 0xFF);
+	BlockingPiWrite(&REG_PI_DOM0_PGS, (romHeaderConfig >> 16) & 0xFF);
+	BlockingPiWrite(&REG_PI_DOM0_RLS, (romHeaderConfig >> 20) & 0xFF);
+	
+	// Check RDP Command Status Register XBUS_DMEM_DMA flag and wait for PIPE_BUSY to clear
+	//TODO: Is this basically waiting for the commands to flush? Aka the pipe is no longer busy?
+	if (REG_DPC_STATUS & REG_DPC_STATUS_BIT_XBUS_DMEM_DMA)
 	{
-		while (REGISTER(REG_ADDR_DPC_SR) & (1u<<5)) {}        // PIPE_BUSY
+		while (REG_DPC_STATUS & REG_DPC_STATUS_BIT_PIPE_BUSY) { }
 	}
 	
-	// copy target IPL3 (words 16..1023) into RSP DMEM
-	volatile uint32_t *dmem = (volatile uint32_t*)(uintptr_t)0xA4000000u;
-	for (int i = 16; i < 1024; i++) dmem[i] = BlockingPiRead(base + (uint32_t)i*4);
+	// Copy target IPL3 (words 16..1023) into RSP DMEM
+	volatile u32* dmem = (volatile u32*)(uintptr_t)(KSEG1_START_ADDR + RSP_MEMORY_BASE + RSP_DMEM_START);
+	for (int i = 16; i < 1024; i++) { dmem[i] = BlockingPiRead((volatile u32*)(romHeaderBase + (u32)i*4)); }
 	
-	register uint32_t s3 __asm__("s3") = device & 1;
-	register uint32_t s4 __asm__("s4") = tvType & 3;
-	register uint32_t s5 __asm__("s5") = fastReset & 1;
-	register uint32_t s6 __asm__("s6") = seed & 0xFF;
-	register uint32_t s7 __asm__("s7") = (tvType==0?6u : tvType==1?1u : tvType==2?4u : 0u);
+	register u32 s3 __asm__("s3") = 0; //0=cart, 1=device (TODO: For 64DD support maybe? Is it even used in the assembly code above?) 
+	register u32 s4 __asm__("s4") = (tvType & 3);
+	register u32 s5 __asm__("s5") = 1; //0=Full reset 1=Fast reset (Keep RDRAM mapping)
+	register u32 s6 __asm__("s6") = seed;
+	register u32 s7 __asm__("s7") = (tvType==0 ? 6u : (tvType==1 ? 1u : (tvType==2 ? 4u : 0u)));
 	
 	__asm__ volatile (
 		".set noreorder \n"
-		"li $t3, reboot \n"       // absolute constant -> lui/ori, no reloc
+		"li $t3, reboot \n" // We use "li" here because the assembly is in this file, same compilation unit, absolute address
 		"jr $t3         \n"
 		"nop            \n"
 		".set reorder   \n"

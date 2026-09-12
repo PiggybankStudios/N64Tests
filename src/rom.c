@@ -88,6 +88,10 @@ void UpdateRom()
 	{
 		debugf("A Button was Pressed!\n");
 	}
+	if (pads[0].z && !rom.prevPadStates[0].z)
+	{
+		SoftRebootN64();
+	}
 	
 	Test_Update3dScene(&pads[0]);
 	

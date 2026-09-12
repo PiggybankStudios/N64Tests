@@ -25,6 +25,7 @@ Description:
 // +==============================+
 // |           Headers            |
 // +==============================+
+#include "registers.h"
 #include "defines.h"
 #include "rom.h"
 

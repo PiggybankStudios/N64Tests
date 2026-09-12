@@ -54,7 +54,7 @@ bool SC64_PollAUX()
 		case SC64_AUX_MSG_PING: break;
 		case SC64_AUX_MSG_HALT: haltReceived = true; break;
 		// case SC64_AUX_MSG_REBOOT: SoftRebootSC64(); break;
-		case SC64_AUX_MSG_REBOOT: SoftRebootN64(/*cart=*/0, /*fast*/1, /*6102*/0x3F); break;
+		case SC64_AUX_MSG_REBOOT: SoftRebootN64(); break;
 		default: /*Unknown message, do nohing*/ break;
 	}
 	return haltReceived;
