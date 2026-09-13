@@ -28,6 +28,7 @@ Description:
 // +==============================+
 #include "registers.h"
 #include "defines.h"
+#include "macros.h"
 #include "model.h"
 
 #include "rom.h"

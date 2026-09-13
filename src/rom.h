@@ -25,7 +25,8 @@ struct RomState
 	uint32_t elapsedMs;
 	float timeScale;
 	
-	joypad_buttons_t prevPadStates[4];
+	joypad_inputs_t joy[4];
+	joypad_inputs_t prevJoy[4];
 	
 	model64_t* carModel;
 	model64_t* planetModel;

@@ -73,38 +73,32 @@ void UpdateRom()
 	if (SC64_PollAUX()) { rom.halt = true; return; } //return if HALT has been received
 	joypad_poll();
 	
-	joypad_buttons_t pads[4];
-	pads[0] = joypad_get_buttons(JOYPAD_PORT_1);
-	pads[1] = joypad_get_buttons(JOYPAD_PORT_2);
-	pads[2] = joypad_get_buttons(JOYPAD_PORT_3);
-	pads[3] = joypad_get_buttons(JOYPAD_PORT_4);
+	rom.prevJoy[0] = rom.joy[0];
+	rom.prevJoy[1] = rom.joy[1];
+	rom.prevJoy[2] = rom.joy[2];
+	rom.prevJoy[3] = rom.joy[3];
+	rom.joy[0] = joypad_get_inputs(JOYPAD_PORT_1);
+	rom.joy[1] = joypad_get_inputs(JOYPAD_PORT_2);
+	rom.joy[2] = joypad_get_inputs(JOYPAD_PORT_3);
+	rom.joy[3] = joypad_get_inputs(JOYPAD_PORT_4);
 	
 	rom.prevRomTime = rom.romTime;
 	rom.romTime = get_ticks_ms();
 	rom.elapsedMs = (rom.romTime >= rom.prevRomTime) ? (rom.romTime - rom.prevRomTime) : 0;
 	rom.timeScale = ((float)rom.elapsedMs / 33.0f);
 	
-	if (pads[0].a && !rom.prevPadStates[0].a)
-	{
-		debugf("A Button was Pressed!\n");
-		rom.planetCollision = LoadPlanetCollision(StrLit(UNIT_BOX_MODEL_PATH));
-		debugf("collision has %lu faces\n", rom.planetCollision.numFaces);
-		debugf("collision bounds=(%g,%g,%g, %g,%g,%g)\n",
-			rom.planetCollision.bounds.x, rom.planetCollision.bounds.y, rom.planetCollision.bounds.z,
-			rom.planetCollision.bounds.width, rom.planetCollision.bounds.height, rom.planetCollision.bounds.depth
-		);
-	}
-	if (pads[0].z && !rom.prevPadStates[0].z)
-	{
-		SoftRebootN64();
-	}
+	if (rom.joy[0].btn.a       && !rom.prevJoy[0].btn.a)       { debugf("A Button was Pressed!\n");       }
+	if (rom.joy[0].btn.b       && !rom.prevJoy[0].btn.b)       { debugf("B Button was Pressed!\n");       }
+	if (rom.joy[0].btn.c_left  && !rom.prevJoy[0].btn.c_left)  { debugf("C-Left Button was Pressed!\n");  }
+	if (rom.joy[0].btn.c_right && !rom.prevJoy[0].btn.c_right) { debugf("C-Right Button was Pressed!\n"); }
+	if (rom.joy[0].btn.c_up    && !rom.prevJoy[0].btn.c_up)    { debugf("C-Up Button was Pressed!\n");    }
+	if (rom.joy[0].btn.c_down  && !rom.prevJoy[0].btn.c_down)  { debugf("C-Down Button was Pressed!\n");  }
+	if (rom.joy[0].btn.z       && !rom.prevJoy[0].btn.z)       { debugf("Z Button was Pressed!\n");       }
+	if (rom.joy[0].btn.start   && !rom.prevJoy[0].btn.start)   { debugf("Start Button was Pressed!\n");   }
 	
-	Test_Update3dScene(&pads[0]);
+	if (rom.joy[0].btn.start && !rom.prevJoy[0].btn.start) { debugf("Rebooting!\n"); SoftRebootN64(); }
 	
-	rom.prevPadStates[0] = pads[0];
-	rom.prevPadStates[1] = pads[1];
-	rom.prevPadStates[2] = pads[2];
-	rom.prevPadStates[3] = pads[3];
+	Test_Update3dScene();
 }
 
 // +--------------------------------------------------------------+
@@ -129,6 +123,7 @@ void RenderRom()
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 15, rom.rtcAvailable      ? "RTC: Available"           : "RTC: NOT AVAILABLE"          );
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 25, rom.usbDebugAvailable ? "USB Debugging: Available" : "USB Debugging: NOT AVAILABLE");
 	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 15, "romTime: %lu,%lums", (rom.romTime/1000), (rom.romTime%1000));
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 30, "offset: (%g, %g, %g)", rom.planetOffsetGoto.x, rom.planetOffsetGoto.y, rom.planetOffsetGoto.z);
 	
 	// Test_RenderDfsEntries();
 	// Test_RenderTypeSizes();

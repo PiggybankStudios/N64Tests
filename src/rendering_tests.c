@@ -105,33 +105,51 @@ void Test_Init3dScene()
 	// rom.carModel = model64_load(ERROR_MODEL_PATH);
 	// rom.carModel = model64_load(UNIT_BOX_MODEL_PATH);
 	rom.planetModel = model64_load(PLANET_MODEL_PATH);
-	rom.origPlanetOffset = MakeV3(1.5f, 2.5f, -11.0f);
+	rom.origPlanetOffset = MakeV3(1.5f, -1.7f, -11.0f);
 	rom.planetOffset = rom.origPlanetOffset;
 	rom.planetOffsetGoto = rom.planetOffset;
+	
+	rom.planetCollision = LoadPlanetCollision(StrLit(PLANET_MODEL_PATH));
+	debugf("collision has %lu faces\n", rom.planetCollision.numFaces);
+	debugf("collision bounds=(%g,%g,%g, %g,%g,%g)\n",
+		rom.planetCollision.bounds.x, rom.planetCollision.bounds.y, rom.planetCollision.bounds.z,
+		rom.planetCollision.bounds.width, rom.planetCollision.bounds.height, rom.planetCollision.bounds.depth
+	);
 	
 	rom.carRotation = 0;
 }
 
-void Test_Update3dScene(joypad_buttons_t* pads)
+void Test_Update3dScene()
 {
 	rom.carRotation += rom.timeScale * 5.0f;
 	if (rom.carRotation >= 360.0f) { rom.carRotation -= 360.0f; }
 	
-	if (pads[0].z && !rom.prevPadStates[0].z)
+	if (rom.joy[0].btn.z && !rom.prevJoy[0].btn.z)
 	{
 		rom.planetOffset = rom.origPlanetOffset;
 		rom.planetOffsetGoto = rom.planetOffset;
 	}
-	#define PLANET_DBG_MOVE_SPEED 0.5f
-	if (pads[0].d_right) { rom.planetOffsetGoto.x -= PLANET_DBG_MOVE_SPEED; }
-	if (pads[0].d_down)  { rom.planetOffsetGoto.z -= PLANET_DBG_MOVE_SPEED; }
-	if (pads[0].d_left)  { rom.planetOffsetGoto.x += PLANET_DBG_MOVE_SPEED; }
-	if (pads[0].d_up)    { rom.planetOffsetGoto.z += PLANET_DBG_MOVE_SPEED; }
-	if (pads[0].r)       { rom.planetOffsetGoto.y -= PLANET_DBG_MOVE_SPEED; }
-	if (pads[0].l)       { rom.planetOffsetGoto.y += PLANET_DBG_MOVE_SPEED; }
+	#define PLANET_DBG_MOVE_HORI_SPEED 0.5f
+	#define PLANET_DBG_MOVE_VERT_SPEED 0.1f
+	if (rom.joy[0].btn.d_right) { rom.planetOffsetGoto.x -= PLANET_DBG_MOVE_HORI_SPEED; }
+	if (rom.joy[0].btn.d_down)  { rom.planetOffsetGoto.z -= PLANET_DBG_MOVE_HORI_SPEED; }
+	if (rom.joy[0].btn.d_left)  { rom.planetOffsetGoto.x += PLANET_DBG_MOVE_HORI_SPEED; }
+	if (rom.joy[0].btn.d_up)    { rom.planetOffsetGoto.z += PLANET_DBG_MOVE_HORI_SPEED; }
+	if (rom.joy[0].btn.r)       { rom.planetOffsetGoto.y -= PLANET_DBG_MOVE_VERT_SPEED; }
+	if (rom.joy[0].btn.l)       { rom.planetOffsetGoto.y += PLANET_DBG_MOVE_VERT_SPEED; }
+	
+	#define PLANET_ANALOG_MOVE_SPEED 0.5f
+	v2 stickVec = MakeV2((r32)rom.joy[0].stick_x / 127.0f, (r32)rom.joy[0].stick_y / 127.0f);
+	r32 stickLengthSquared = LengthSquaredV2(stickVec);
+	bool stickNotInDeadzone = (stickLengthSquared > STICK_DEADZONE * STICK_DEADZONE);
+	if (stickNotInDeadzone)
+	{
+		rom.planetOffsetGoto.x -= stickVec.x * PLANET_ANALOG_MOVE_SPEED;
+		rom.planetOffsetGoto.z += stickVec.y * PLANET_ANALOG_MOVE_SPEED;
+	}
 	
 	v3 planetOffsetDiff = SubV3(rom.planetOffsetGoto, rom.planetOffset);
-	if (LengthSquaredV3(planetOffsetDiff) > 0.01f)
+	if (LengthSquaredV3(planetOffsetDiff) > 0.001f || stickNotInDeadzone)
 	{
 		rom.planetOffset = AddV3(rom.planetOffset, ShrinkV3(planetOffsetDiff, 7.0f));
 	}

@@ -23,6 +23,7 @@ int main()
 	bool DEBUG_BUILD           = ExtractBoolDefine(buildConfigContents, StrLit("DEBUG_BUILD"));
 	bool MAKE_RESOURCES_DFS    = ExtractBoolDefine(buildConfigContents, StrLit("MAKE_RESOURCES_DFS"));
 	bool UPLOAD_TO_SC64        = ExtractBoolDefine(buildConfigContents, StrLit("UPLOAD_TO_SC64"));
+	bool ATTACH_TO_DEBUG_SC64  = ExtractBoolDefine(buildConfigContents, StrLit("ATTACH_TO_DEBUG_SC64"));
 	bool START_ARES_EMULATOR   = ExtractBoolDefine(buildConfigContents, StrLit("START_ARES_EMULATOR"));
 	bool INSTALL_TO_SC64       = ExtractBoolDefine(buildConfigContents, StrLit("INSTALL_TO_SC64"));
 	Str TOOLCHAIN_PREFIX       =  ExtractStrDefine(buildConfigContents, StrLit("TOOLCHAIN_PREFIX"));
@@ -138,7 +139,7 @@ int main()
 		AddArgNt(&compileArgs, GCC_ALIGN_FUNCS_TO, "32");
 		AddArg(&compileArgs, GCC_SEP_FUNC_SECTIONS);
 		AddArg(&compileArgs, GCC_SEP_DATA_SECTIONS);
-		AddArg(&compileArgs, GCC_DEBUG_INFO_DEFAULT);
+		if (DEBUG_BUILD) { AddArg(&compileArgs, GCC_DEBUG_INFO_DEFAULT); }
 		// AddArg(&compileArgs, CLANG_FULL_FILE_PATHS); //TODO: Does GCC support full paths?
 		// AddArg(&compileArgs, "-ffile-prefix-map="$(CURDIR)"=$(N64_BACKTRACE_FILE_PREFIX)"); // NOTE: if you change this, also change backtrace() in backtrace.c
 		AddArg(&compileArgs, "-ffast-math");
@@ -254,6 +255,17 @@ int main()
 		AddArg(&uploadArgs, SC64_SD_SUBCMD_UPLOAD);
 		AddArgStr(&uploadArgs, CLI_QUOTED_ARG, romFilename);
 		RunCliProgramAndExitOnFailure(SC64DEPLOYER_PATH, &uploadArgs, StrLit("Failed to upload ROM to SummerCart64 SD Card with sc64deployer"));
+	}
+	
+	// +==============================+
+	// |       Attach to Debug        |
+	// +==============================+
+	if (ATTACH_TO_DEBUG_SC64)
+	{
+		WriteLine("Debugging... (Ctrl+C to cancel, or Ctrl+Break in Sublime Text)");
+		CliArgs debugArgs = EMPTY;
+		AddArg(&debugArgs, SC64_CMD_DEBUG);
+		RunCliProgramAndExitOnFailure(SC64DEPLOYER_PATH, &debugArgs, StrLit("Failed to start debugging with sc64deployer"));
 	}
 	
 	// +==============================+

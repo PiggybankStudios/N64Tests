@@ -17,11 +17,13 @@ Description:
 #define BUILD_FOR_EMULATOR  0
 
 // This can be done while the console is powered on, but a power cycle must be performed for the change to take effect
-#define UPLOAD_TO_SC64      1
+#define UPLOAD_TO_SC64       1
 // Make sure the console is powered off. Flash access is unsafe while it's powered on
-#define INSTALL_TO_SC64     0
+#define INSTALL_TO_SC64      0
+// After installing/uploading to SC64 cart, attach to the debug output via "sc64deployer.exe debug"
+#define ATTACH_TO_DEBUG_SC64 1
 // Runs Ares emulator - https://ares-emu.net/
-#define START_ARES_EMULATOR 0
+#define START_ARES_EMULATOR  0
 
 
 
