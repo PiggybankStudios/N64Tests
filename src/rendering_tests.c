@@ -110,13 +110,14 @@ void Test_Init3dScene()
 	rom.planetOffsetGoto = rom.planetOffset;
 	
 	rom.planetCollision = LoadCollisionSceneFromModel(StrLit(PLANET_MODEL_PATH));
+	// rom.planetCollision = LoadCollisionSceneFromModel(StrLit(CAR_MODEL_PATH));
 	debugf("collision has %lu faces\n", rom.planetCollision.numFaces);
 	debugf("collision bounds=(%g,%g,%g, %g,%g,%g)\n",
 		rom.planetCollision.bounds.x, rom.planetCollision.bounds.y, rom.planetCollision.bounds.z,
 		rom.planetCollision.bounds.width, rom.planetCollision.bounds.height, rom.planetCollision.bounds.depth
 	);
 	
-	rom.drawClosestFace = DEBUG_BUILD;
+	rom.drawClosestFace = (false && DEBUG_BUILD);
 	
 	rom.carRotation = 0;
 }
@@ -126,12 +127,10 @@ void Test_Update3dScene()
 	rom.carRotation += rom.timeScale * 5.0f;
 	if (rom.carRotation >= 360.0f) { rom.carRotation -= 360.0f; }
 	
-	bool moved = false;
 	if (rom.joy[0].btn.z && !rom.prevJoy[0].btn.z)
 	{
 		rom.planetOffset = rom.origPlanetOffset;
 		rom.planetOffsetGoto = rom.planetOffset;
-		moved = true;
 	}
 	
 	if (rom.joy[0].btn.b && !rom.prevJoy[0].btn.b)
@@ -140,8 +139,6 @@ void Test_Update3dScene()
 		debugf("Closest face rendering %s!\n", rom.drawClosestFace ? "Enabled" : "Disabled");
 	}
 	
-	#define PLANET_DBG_MOVE_HORI_SPEED 0.5f
-	#define PLANET_DBG_MOVE_VERT_SPEED 0.1f
 	if (rom.joy[0].btn.d_right) { rom.planetOffsetGoto.x -= PLANET_DBG_MOVE_HORI_SPEED; }
 	if (rom.joy[0].btn.d_down)  { rom.planetOffsetGoto.z -= PLANET_DBG_MOVE_HORI_SPEED; }
 	if (rom.joy[0].btn.d_left)  { rom.planetOffsetGoto.x += PLANET_DBG_MOVE_HORI_SPEED; }
@@ -149,7 +146,6 @@ void Test_Update3dScene()
 	if (rom.joy[0].btn.r)       { rom.planetOffsetGoto.y -= PLANET_DBG_MOVE_VERT_SPEED; }
 	if (rom.joy[0].btn.l)       { rom.planetOffsetGoto.y += PLANET_DBG_MOVE_VERT_SPEED; }
 	
-	#define PLANET_ANALOG_MOVE_SPEED 0.5f
 	v2 stickVec = MakeV2((r32)rom.joy[0].stick_x / 127.0f, (r32)rom.joy[0].stick_y / 127.0f);
 	r32 stickLengthSquared = LengthSquaredV2(stickVec);
 	bool stickNotInDeadzone = (stickLengthSquared > STICK_DEADZONE * STICK_DEADZONE);
@@ -159,22 +155,31 @@ void Test_Update3dScene()
 		rom.planetOffsetGoto.z += stickVec.y * PLANET_ANALOG_MOVE_SPEED;
 	}
 	
+	if (rom.drawClosestFace)
+	{
+		v3 carPos = SubV3(CAR_OFFSET, rom.planetOffsetGoto);
+		// rom.closestFace = FindClosestFace(&rom.planetCollision, carPos, &rom.closestFaceDistance);
+		
+		rom.closestFace = FindCurrentCollisionFace(&rom.planetCollision, carPos, COLL_GROUND_THICKNESS, &rom.carAltitude);
+		if (rom.closestFace != nullptr)
+		{
+			if (rom.carAltitude < 0)
+			{
+				rom.planetOffsetGoto = AddV3(rom.planetOffsetGoto, ScaleV3(rom.closestFace->normal, rom.carAltitude - EPSILON));
+			}
+		}
+	}
+	
 	v3 planetOffsetDiff = SubV3(rom.planetOffsetGoto, rom.planetOffset);
 	if (LengthSquaredV3(planetOffsetDiff) > 0.001f || stickNotInDeadzone)
 	{
-		rom.planetOffset = AddV3(rom.planetOffset, ShrinkV3(planetOffsetDiff, 7.0f));
-		moved = true;
+		rom.planetOffset = AddV3(rom.planetOffset, ShrinkV3(planetOffsetDiff, MOVEMENT_LAG_DIVISOR));
 	}
 	else if (!AreEqualV3(rom.planetOffset, rom.planetOffsetGoto))
 	{
 		rom.planetOffset = rom.planetOffsetGoto;
-		moved = true;
 	}
 	
-	if (rom.drawClosestFace && (moved || rom.frameIndex == 0))
-	{
-		rom.closestFace = FindClosestFace(&rom.planetCollision, SubV3(CAR_OFFSET, rom.planetOffset), &rom.closestFaceDistance);
-	}
 }
 
 void Test_Render3dScene()
@@ -211,12 +216,18 @@ void Test_Render3dScene()
 			v3 vert1 = AddV3(rom.planetOffset, rom.closestFace->verts[1]);
 			v3 vert2 = AddV3(rom.planetOffset, rom.closestFace->verts[2]);
 			v3 center = ShrinkV3(AddV3(AddV3(vert0, vert1), vert2), 3);
+			v3 faceTangent1 = CrossV3(rom.closestFace->normal, V3_Right);
+			v3 faceTangent2 = CrossV3(faceTangent1, rom.closestFace->normal);
 			v3 normalScaled = ScaleV3(rom.closestFace->normal, 1.5f);
+			v3 faceTangent1Scaled = ScaleV3(faceTangent1, 1.5f);
+			v3 faceTangent2Scaled = ScaleV3(faceTangent2, 1.5f);
 			
 			DrawBoxAt(vert0, 0.2f);
 			DrawBoxAt(vert1, 0.2f);
 			DrawBoxAt(vert2, 0.2f);
 			DrawBoxAt(AddV3(center, normalScaled), 0.2f);
+			DrawBoxAt(AddV3(center, faceTangent1Scaled), 0.2f);
+			DrawBoxAt(AddV3(center, faceTangent2Scaled), 0.2f);
 			
 			DrawLineBox(vert0, vert1, 0.15f);
 			DrawLineBox(vert1, vert2, 0.15f);

@@ -138,6 +138,12 @@ void RenderRom()
 		rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 60, "closest: face[%lu]", (u32)(rom.closestFace - rom.planetCollision.faces));
 		v3 carPos = SubV3(CAR_OFFSET, rom.planetOffset);
 		r32 carDot = DotV3(carPos, rom.closestFace->normal);
+		// r32 carAltitude = (carDot - rom.closestFace->planeDist);
+		rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 75, "car: %s%.2f %s surface",
+			(rom.carAltitude >= 0.0f) ? "+" : "",
+			rom.carAltitude,
+			(rom.carAltitude >= 0.0f) ? "above" : "below"
+		);
 	}
 	
 	// Test_RenderDfsEntries();

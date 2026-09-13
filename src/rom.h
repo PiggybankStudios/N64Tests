@@ -39,6 +39,7 @@ struct RomState
 	bool drawClosestFace;
 	CollisionFace* closestFace;
 	r32 closestFaceDistance;
+	r32 carAltitude;
 	
 	float carRotation;
 	
