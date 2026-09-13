@@ -109,7 +109,7 @@ void Test_Init3dScene()
 	rom.planetOffset = rom.origPlanetOffset;
 	rom.planetOffsetGoto = rom.planetOffset;
 	
-	rom.planetCollision = LoadPlanetCollision(StrLit(PLANET_MODEL_PATH));
+	rom.planetCollision = LoadCollisionSceneFromModel(StrLit(PLANET_MODEL_PATH));
 	debugf("collision has %lu faces\n", rom.planetCollision.numFaces);
 	debugf("collision bounds=(%g,%g,%g, %g,%g,%g)\n",
 		rom.planetCollision.bounds.x, rom.planetCollision.bounds.y, rom.planetCollision.bounds.z,
@@ -149,13 +149,21 @@ void Test_Update3dScene()
 	}
 	
 	v3 planetOffsetDiff = SubV3(rom.planetOffsetGoto, rom.planetOffset);
+	bool moved = false;
 	if (LengthSquaredV3(planetOffsetDiff) > 0.001f || stickNotInDeadzone)
 	{
 		rom.planetOffset = AddV3(rom.planetOffset, ShrinkV3(planetOffsetDiff, 7.0f));
+		moved = true;
 	}
-	else
+	else if (!AreEqualV3(rom.planetOffset, rom.planetOffsetGoto))
 	{
 		rom.planetOffset = rom.planetOffsetGoto;
+		moved = true;
+	}
+	
+	if (moved || rom.frameIndex == 0)
+	{
+		rom.closestFace = FindClosestFace(&rom.planetCollision, AddV3(CAR_OFFSET, ScaleV3(rom.planetOffset, -1)), &rom.closestFaceDistance);
 	}
 }
 
@@ -176,7 +184,8 @@ void Test_Render3dScene()
 		
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		glTranslatef(0.0f, -1.5f, -3.0f);
+		v3 carOffset = CAR_OFFSET;
+		glTranslatef(carOffset.x, carOffset.y, carOffset.z);
 		glRotatef(rom.carRotation, 0.0f, 1.0f, 0.0f);
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		model64_draw(rom.carModel);
@@ -185,6 +194,30 @@ void Test_Render3dScene()
 		glLoadIdentity();
 		glTranslatef(rom.planetOffset.x, rom.planetOffset.y, rom.planetOffset.z);
 		model64_draw(rom.planetModel);
+		
+		if (rom.closestFace != nullptr)
+		{
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+			glTranslatef(-0.5f, -0.5f, -0.5f);
+			glScalef(0.5f, 0.5f, 0.5f);
+			glTranslatef(rom.planetOffset.x + rom.closestFace->verts[0].x, rom.planetOffset.y + rom.closestFace->verts[0].y, rom.planetOffset.z + rom.closestFace->verts[0].z);
+			model64_draw(rom.unitBoxModel);
+			
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+			glTranslatef(-0.5f, -0.5f, -0.5f);
+			glScalef(0.5f, 0.5f, 0.5f);
+			glTranslatef(rom.planetOffset.x + rom.closestFace->verts[1].x, rom.planetOffset.y + rom.closestFace->verts[1].y, rom.planetOffset.z + rom.closestFace->verts[1].z);
+			model64_draw(rom.unitBoxModel);
+			
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+			glTranslatef(-0.5f, -0.5f, -0.5f);
+			glScalef(0.5f, 0.5f, 0.5f);
+			glTranslatef(rom.planetOffset.x + rom.closestFace->verts[2].x, rom.planetOffset.y + rom.closestFace->verts[2].y, rom.planetOffset.z + rom.closestFace->verts[2].z);
+			model64_draw(rom.unitBoxModel);
+		}
 		
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();

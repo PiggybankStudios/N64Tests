@@ -19,10 +19,10 @@ r32 HalfFixedN64ToR32(i16 fixedPoint, int numFractionalBits)
 	return (r32)fixedPoint / (r32)(1 << numFractionalBits);
 }
 
-PlanetCollision LoadPlanetCollision(Str8 path)
+CollisionScene LoadCollisionSceneFromModel(Str8 path)
 {
 	AssertNullTerm(path); //TODO: Should we alloc on a scratch arena to ensure this instead?
-	PlanetCollision result = ZEROED;
+	CollisionScene result = ZEROED;
 	
 	int modelSize = 0;
 	u8* modelData = (u8*)asset_load(path.chars, &modelSize);

@@ -12,6 +12,7 @@ Description:
 #define DEBUG_FONT_ID   10
 
 #define STICK_DEADZONE 0.1f
+#define CAR_OFFSET MakeV3(0.0f, -1.5f, -3.0f)
 
 #define MODELS_FOLDER "rom:/models"
 

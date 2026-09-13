@@ -149,23 +149,4 @@ struct ModelHeader
 	char** texturePaths;  ///< Pointer to first texture path
 };
 
-// +--------------------------------------------------------------+
-// |                          Our Types                           |
-// +--------------------------------------------------------------+
-typedef struct CollisionFace CollisionFace;
-struct CollisionFace
-{
-	v3 verts[3];
-	v3 normal;
-	r32 planeDist;
-};
-
-typedef struct PlanetCollision PlanetCollision;
-struct PlanetCollision
-{
-	box bounds;
-	u32 numFaces;
-	CollisionFace* faces;
-};
-
 #endif //  _MODEL_H

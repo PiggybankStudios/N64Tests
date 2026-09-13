@@ -14,6 +14,7 @@ Description:
 
 #include "base/base_typedefs.h"
 #include "base/base_assert.h"
+#include "std/std_basic_math.h"
 #include "struct/struct_string.h"
 #include "struct/struct_vectors.h"
 #include "struct/struct_matrices.h"
@@ -30,6 +31,7 @@ Description:
 #include "defines.h"
 #include "macros.h"
 #include "model.h"
+#include "collision.h"
 
 #include "rom.h"
 
@@ -39,6 +41,7 @@ Description:
 #include "reboot.c"
 #include "sc64.c"
 #include "model.c"
+#include "collision.c"
 #include "rendering_tests.c"
 #include "rom.c"
 

@@ -57,8 +57,11 @@ void InitRom()
 	rom.romTime = rom.prevRomTime;
 	rom.elapsedMs = 0;
 	rom.timeScale = 1.0f;
+	rom.frameIndex = 0;
 	
 	Test_Init3dScene();
+	
+	rom.unitBoxModel = model64_load(UNIT_BOX_MODEL_PATH);
 	
 	rom.shutdown = false;
 	rom.initialized = true;
@@ -99,6 +102,8 @@ void UpdateRom()
 	if (rom.joy[0].btn.start && !rom.prevJoy[0].btn.start) { debugf("Rebooting!\n"); SoftRebootN64(); }
 	
 	Test_Update3dScene();
+	
+	rom.frameIndex++;
 }
 
 // +--------------------------------------------------------------+

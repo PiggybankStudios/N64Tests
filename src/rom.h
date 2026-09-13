@@ -20,17 +20,22 @@ struct RomState
 	bool rtcAvailable;
 	bool debugOutputAvailable;
 	
-	uint32_t prevRomTime;
-	uint32_t romTime;
-	uint32_t elapsedMs;
+	u32 prevRomTime;
+	u32 romTime;
+	u32 elapsedMs;
 	float timeScale;
+	u32 frameIndex;
 	
 	joypad_inputs_t joy[4];
 	joypad_inputs_t prevJoy[4];
 	
+	model64_t* unitBoxModel;
 	model64_t* carModel;
 	model64_t* planetModel;
-	PlanetCollision planetCollision;
+	CollisionScene planetCollision;
+	
+	CollisionFace* closestFace;
+	r32 closestFaceDistance;
 	
 	float carRotation;
 	
