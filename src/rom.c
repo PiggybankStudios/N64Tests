@@ -87,8 +87,10 @@ void UpdateRom()
 	
 	rom.prevRomTime = rom.romTime;
 	rom.romTime = get_ticks_ms();
-	rom.elapsedMs = (rom.romTime >= rom.prevRomTime) ? (rom.romTime - rom.prevRomTime) : 0;
+	rom.elapsedMs = (rom.romTime >= rom.prevRomTime) ? (u32)(rom.romTime - rom.prevRomTime) : 0;
 	rom.timeScale = ((float)rom.elapsedMs / 33.0f);
+	rom.frameTimes[rom.frameTimeWriteIndex] = rom.elapsedMs;
+	rom.frameTimeWriteIndex = (rom.frameTimeWriteIndex+1) % ArrayCount(rom.frameTimes);
 	
 	if (rom.joy[0].btn.a       && !rom.prevJoy[0].btn.a)       { debugf("A Button was Pressed!\n");       }
 	if (rom.joy[0].btn.b       && !rom.prevJoy[0].btn.b)       { debugf("B Button was Pressed!\n");       }
@@ -127,8 +129,16 @@ void RenderRom()
 	
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 15, rom.rtcAvailable      ? "RTC: Available"           : "RTC: NOT AVAILABLE"          );
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 25, rom.usbDebugAvailable ? "USB Debugging: Available" : "USB Debugging: NOT AVAILABLE");
-	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 15, "romTime: %lu,%lums", (rom.romTime/1000), (rom.romTime%1000));
-	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 30, "offset: (%g, %g, %g)", rom.planetOffsetGoto.x, rom.planetOffsetGoto.y, rom.planetOffsetGoto.z);
+	r32 avgFrameTime = (r32)(rom.frameTimes[0] + rom.frameTimes[1] + rom.frameTimes[2] + rom.frameTimes[3] + rom.frameTimes[4]) / 5.0f;
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 15, "FrameTime: %.1fms (%.1fFPS)", avgFrameTime, 1000.0f / avgFrameTime);
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 30, "romTime: %llu,%llums", (rom.romTime/1000), (rom.romTime%1000));
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 45, "offset: (%g, %g, %g)", rom.planetOffsetGoto.x, rom.planetOffsetGoto.y, rom.planetOffsetGoto.z);
+	if (rom.closestFace != nullptr && rom.drawClosestFace)
+	{
+		rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 60, "closest: face[%lu]", (u32)(rom.closestFace - rom.planetCollision.faces));
+		v3 carPos = SubV3(CAR_OFFSET, rom.planetOffset);
+		r32 carDot = DotV3(carPos, rom.closestFace->normal);
+	}
 	
 	// Test_RenderDfsEntries();
 	// Test_RenderTypeSizes();

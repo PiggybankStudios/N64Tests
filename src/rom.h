@@ -21,10 +21,12 @@ struct RomState
 	bool debugOutputAvailable;
 	
 	u32 prevRomTime;
-	u32 romTime;
+	u64 romTime;
 	u32 elapsedMs;
 	float timeScale;
 	u32 frameIndex;
+	u32 frameTimeWriteIndex;
+	r32 frameTimes[5];
 	
 	joypad_inputs_t joy[4];
 	joypad_inputs_t prevJoy[4];
@@ -34,6 +36,7 @@ struct RomState
 	model64_t* planetModel;
 	CollisionScene planetCollision;
 	
+	bool drawClosestFace;
 	CollisionFace* closestFace;
 	r32 closestFaceDistance;
 	

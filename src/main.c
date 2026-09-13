@@ -41,6 +41,7 @@ Description:
 #include "reboot.c"
 #include "sc64.c"
 #include "model.c"
+#include "debug_draw.c"
 #include "collision.c"
 #include "rendering_tests.c"
 #include "rom.c"

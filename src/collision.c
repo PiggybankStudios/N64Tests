@@ -7,7 +7,6 @@ Description:
 	** planet geometry in an efficient manner
 */
 
-
 CollisionFace* FindClosestFace(CollisionScene* scene, v3 queryPos, r32* distanceOut)
 {
 	CollisionFace* closestFace = nullptr;

@@ -170,7 +170,7 @@ CollisionScene LoadCollisionSceneFromModel(Str8 path)
 								face->verts[0] = vertexPositions[triIndices[0]];
 								face->verts[1] = vertexPositions[triIndices[1]];
 								face->verts[2] = vertexPositions[triIndices[2]];
-								face->normal = CrossV3(NormalizeV3(SubV3(face->verts[1], face->verts[0])), NormalizeV3(SubV3(face->verts[2], face->verts[0])));
+								face->normal = NormalizeV3(CrossV3(SubV3(face->verts[1], face->verts[0]), SubV3(face->verts[2], face->verts[0])));
 								face->planeDist = DotV3(face->verts[0], face->normal);
 								
 								if (!boundsSet) { result.bounds = MakeBoxV(face->verts[0], V3_Zero); boundsSet = true; }
