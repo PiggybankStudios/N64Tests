@@ -36,16 +36,22 @@ struct RomState
 	model64_t* planetModel;
 	CollisionScene planetCollision;
 	
-	bool drawClosestFace;
+	bool drawCollisionFace;
 	CollisionFace* closestFace;
 	r32 closestFaceDistance;
 	r32 carAltitude;
 	
 	float carRotation;
 	
-	v3 origPlanetOffset;
-	v3 planetOffset;
-	v3 planetOffsetGoto;
+	r32 cameraAngle;
+	v3 cameraPos;
+	v3 cameraTarget;
+	v3 cameraForward; v3 cameraUp; v3 cameraRight;
+	mat4 cameraViewMat;
+	
+	v3 origCarPos;
+	v3 carPos;
+	v3 carUpVec;
 };
 
 extern RomState rom;

@@ -48,7 +48,7 @@ CollisionFace* FindCurrentCollisionFace(CollisionScene* scene, v3 queryPos, r32 
 		if (face->normal.y > 0) //perpendicular faces are "walls", upside-down faces are "roofs", neither are drivable
 		{
 			r32 carAltitude = DotV3(queryPos, face->normal) - face->planeDist;
-			if (carAltitude >= -queryThickness && carAltitude <= -EPSILON)
+			if (carAltitude >= -queryThickness && carAltitude <= 0.1f)
 			{
 				v3 faceBasisVecs[2];
 				faceBasisVecs[0] = CrossV3(face->normal, V3_Right);

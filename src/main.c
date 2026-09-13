@@ -15,6 +15,7 @@ Description:
 #include "base/base_typedefs.h"
 #include "base/base_assert.h"
 #include "std/std_basic_math.h"
+#include "std/std_angles.h"
 #include "struct/struct_string.h"
 #include "struct/struct_vectors.h"
 #include "struct/struct_matrices.h"

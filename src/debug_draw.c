@@ -18,18 +18,38 @@ void SetModelViewMatrix(const mat4* mat)
 	glLoadMatrixf(&transposedMat[0]);
 }
 
+void DrawModelOrigin(model64_t* model, v3 position, v3 scale, v3 origin, quat rotation)
+{
+	mat4 modelView = Mat4_Identity_Const;
+	mat4 centerMat = MakeTranslateXYZMat4_Const(-origin.x, -origin.y, -origin.z);
+	mat4 scaleMat = MakeScaleMat4_Const(scale);
+	mat4 rotationMat = ToMat4FromQuat(rotation);
+	mat4 positionMat = MakeTranslateMat4_Const(position);
+	TransformMat4(&modelView, centerMat);
+	TransformMat4(&modelView, scaleMat);
+	TransformMat4(&modelView, rotationMat);
+	TransformMat4(&modelView, positionMat);
+	TransformMat4(&modelView, rom.cameraViewMat);
+	SetModelViewMatrix(&modelView);
+	model64_draw(model);
+}
+void DrawModel(model64_t* model, v3 position, v3 scale, quat rotation)
+{
+	mat4 modelView = Mat4_Identity_Const;
+	mat4 scaleMat = MakeScaleMat4_Const(scale);
+	mat4 rotationMat = ToMat4FromQuat(rotation);
+	mat4 positionMat = MakeTranslateMat4_Const(position);
+	TransformMat4(&modelView, scaleMat);
+	TransformMat4(&modelView, rotationMat);
+	TransformMat4(&modelView, positionMat);
+	TransformMat4(&modelView, rom.cameraViewMat);
+	SetModelViewMatrix(&modelView);
+	model64_draw(model);
+}
+
 void DrawBoxAt(v3 pos, r32 size)
 {
-	mat4 center = MakeTranslateXYZMat4_Const(-0.5f, -0.5f, -0.5f);
-	mat4 scale = MakeScaleXYZMat4_Const(size, size, size);
-	mat4 translate = MakeTranslateMat4_Const(pos);
-	mat4 transformMat = Mat4_Identity_Const;
-	TransformMat4(&transformMat, center);
-	TransformMat4(&transformMat, scale);
-	TransformMat4(&transformMat, translate);
-	SetModelViewMatrix(&transformMat);
-	
-	model64_draw(rom.unitBoxModel);
+	DrawModelOrigin(rom.unitBoxModel, pos, FillV3(size), FillV3(-0.5f), Quat_Identity);
 }
 
 void DrawLineBox(v3 start, v3 end, r32 thickness)
@@ -55,6 +75,7 @@ void DrawLineBox(v3 start, v3 end, r32 thickness)
 	TransformMat4(&transformMat, scale);
 	TransformMat4(&transformMat, rotation);
 	TransformMat4(&transformMat, translate);
+	TransformMat4(&transformMat, rom.cameraViewMat);
 	SetModelViewMatrix(&transformMat);
 	
 	model64_draw(rom.unitBoxModel);

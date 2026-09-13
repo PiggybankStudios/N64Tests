@@ -11,17 +11,15 @@ Description:
 
 #define DEBUG_FONT_ID   10
 
-#define PLANET_DBG_MOVE_HORI_SPEED 0.5f
-#define PLANET_DBG_MOVE_VERT_SPEED 0.2f
+#define PLANET_DBG_MOVE_HORI_SPEED 0.7f
+#define PLANET_DBG_MOVE_VERT_SPEED 0.1f
 #define PLANET_ANALOG_MOVE_SPEED 0.4f
 
 #define STICK_DEADZONE 0.1f
 #define CAR_OFFSET MakeV3(0.0f, -1.5f, -6.0f)
-#define CAR_RADIUS 0.2f
-// #define MOVEMENT_LAG_DIVISOR 7.0f
-#define MOVEMENT_LAG_DIVISOR 1.0f
 #define COLL_GROUND_THICKNESS 10.0f
 #define COLL_EDGE_DIST 0.5f
+#define CAR_HEIGHT 0.2f
 
 #define MODELS_FOLDER "rom:/models"
 
@@ -32,7 +30,7 @@ Description:
 // #define CAR_MODEL_PATH      MODELS_FOLDER "/proto_kart2.model64"
 #define CAR_MODEL_PATH      MODELS_FOLDER "/ash_kart.model64"
 
-#define PLANET_MODEL_PATH   MODELS_FOLDER "/proto_planet1.model64"
-// #define PLANET_MODEL_PATH   MODELS_FOLDER "/planet_beach_test.model64"
+// #define PLANET_MODEL_PATH   MODELS_FOLDER "/proto_planet1.model64"
+#define PLANET_MODEL_PATH   MODELS_FOLDER "/planet_beach_test.model64"
 
 #endif //  _DEFINES_H
