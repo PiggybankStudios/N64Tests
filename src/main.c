@@ -33,6 +33,7 @@ Description:
 #include "macros.h"
 #include "model.h"
 #include "collision.h"
+#include "kart.h"
 
 #include "rom.h"
 
@@ -44,6 +45,7 @@ Description:
 #include "model.c"
 #include "debug_draw.c"
 #include "collision.c"
+#include "kart.c"
 #include "rendering_tests.c"
 #include "rom.c"
 
