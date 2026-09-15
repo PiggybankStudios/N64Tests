@@ -101,16 +101,25 @@ void InitRom()
 		glEnable(GL_CULL_FACE);
 	}
 	
-	rom.unitBoxModel = model64_load(UNIT_BOX_MODEL_PATH);
-	rom.carModel = model64_load(CAR_MODEL_PATH);
-	// rom.carModel = model64_load(ERROR_MODEL_PATH);
-	// rom.carModel = model64_load(UNIT_BOX_MODEL_PATH);
-	rom.planetModel = model64_load(PLANET_MODEL_PATH);
+	MyMemSet(&rom.karts[0], 0x00, sizeof(KartState) * MAX_KARTS);
+	for (u32 kartIndex = 0; kartIndex < MAX_KARTS; kartIndex++)
+	{
+		rom.karts[kartIndex].modelAssetIndex = ASSET_UNLOADED_INDEX;
+		rom.karts[kartIndex].upVec = V3_Up;
+	}
 	
-	rom.origCarPos = MakeV3(-1.5f, 1.7f, 11.0f);
-	rom.carPos = rom.origCarPos;
-	rom.carRotation = 0;
-	rom.carUpVec = V3_Up;
+	// rom.karts[0].model = KartModel_UnitBox;
+	// rom.karts[0].model = KartModel_ProtoKart1;
+	rom.karts[0].model = KartModel_ProtoKart2;
+	rom.karts[0].pos = MakeV3(-1.5f, 1.7f, 11.0f);
+	rom.karts[0].rotation = 0;
+	rom.karts[0].upVec = V3_Up;
+	rom.origKartPos[0] = rom.karts[0].pos;
+	
+	rom.numKartAssets = 0;
+	
+	rom.unitBoxModel = model64_load(UNIT_BOX_MODEL_PATH);
+	rom.planetModel = model64_load(PLANET_MODEL_PATH);
 	
 	rom.planetCollision = LoadCollisionSceneFromModel(StrLit(PLANET_MODEL_PATH));
 	// rom.planetCollision = LoadCollisionSceneFromModel(StrLit(CAR_MODEL_PATH));
@@ -165,13 +174,62 @@ void UpdateRom()
 	// +==============================+
 	if (rom.joy[0].btn.start && !rom.prevJoy[0].btn.start) { debugf("Rebooting!\n"); SoftRebootN64(); }
 	
-	// +==============================+
-	// |       Reset Car with Z       |
-	// +==============================+
-	if (rom.joy[0].btn.z && !rom.prevJoy[0].btn.z)
+	// +--------------------------------------------------------------+
+	// |                         Update Karts                         |
+	// +--------------------------------------------------------------+
+	for (u32 kartIndex = 0; kartIndex < MAX_PLAYERS; kartIndex++)
 	{
-		debugf("Resetting carPos\n");
-		rom.carPos = rom.origCarPos;
+		KartState* kart = &rom.karts[kartIndex];
+		if (kart->model != KartModel_None)
+		{
+			// +==============================+
+			// |  Reset Kart Position with Z  |
+			// +==============================+
+			if (rom.joy[kartIndex].btn.z && !rom.prevJoy[kartIndex].btn.z)
+			{
+				debugf("Resetting kart[%lu]\n", kartIndex);
+				kart->pos = rom.origKartPos[kartIndex];
+			}
+			
+			// +==============================+
+			// |  Debug Move Kart with DPAD   |
+			// +==============================+
+			if (rom.joy[kartIndex].btn.d_right) { kart->pos.x += PLANET_DBG_MOVE_HORI_SPEED; }
+			if (rom.joy[kartIndex].btn.d_down)  { kart->pos.z += PLANET_DBG_MOVE_HORI_SPEED; }
+			if (rom.joy[kartIndex].btn.d_left)  { kart->pos.x -= PLANET_DBG_MOVE_HORI_SPEED; }
+			if (rom.joy[kartIndex].btn.d_up)    { kart->pos.z -= PLANET_DBG_MOVE_HORI_SPEED; }
+			if (rom.joy[kartIndex].btn.r)       { kart->pos.y += PLANET_DBG_MOVE_VERT_SPEED; }
+			if (rom.joy[kartIndex].btn.l)       { kart->pos.y -= PLANET_DBG_MOVE_VERT_SPEED; }
+			
+			// +==============================+
+			// |   Move Kart with Joystick    |
+			// +==============================+
+			v2 stickVec = MakeV2((r32)rom.joy[kartIndex].stick_x / 127.0f, (r32)rom.joy[kartIndex].stick_y / 127.0f);
+			r32 stickLengthSquared = LengthSquaredV2(stickVec);
+			bool stickNotInDeadzone = (stickLengthSquared > STICK_DEADZONE * STICK_DEADZONE);
+			if (stickNotInDeadzone)
+			{
+				kart->pos.x += stickVec.x * PLANET_ANALOG_MOVE_SPEED;
+				kart->pos.z -= stickVec.y * PLANET_ANALOG_MOVE_SPEED;
+				kart->rotation = AngleFixR32(AtanR32(stickVec.y, -stickVec.x));
+			}
+			
+			// +==================================+
+			// | Do Collision With CollisionScene |
+			// +==================================+
+			kart->drivingFace = FindCurrentCollisionFace(&rom.planetCollision, kart->pos, COLL_GROUND_THICKNESS, &kart->altitude);
+			if (kartIndex == 0) { rom.closestFace = kart->drivingFace; }
+			if (kart->drivingFace != nullptr)
+			{
+				kart->upVec = kart->drivingFace->normal;
+				if (kart->altitude < 0)
+				{
+					kart->pos = AddV3(kart->pos, ScaleV3(kart->drivingFace->normal, -kart->altitude + EPSILON));
+					kart->altitude = EPSILON;
+				}
+			}
+			else { kart->altitude = INFINITY; }
+		}
 	}
 	
 	// +====================================+
@@ -184,53 +242,21 @@ void UpdateRom()
 	}
 	
 	// +==============================+
-	// |      Move Car with DPAD      |
-	// +==============================+
-	if (rom.joy[0].btn.d_right) { rom.carPos.x += PLANET_DBG_MOVE_HORI_SPEED; }
-	if (rom.joy[0].btn.d_down)  { rom.carPos.z += PLANET_DBG_MOVE_HORI_SPEED; }
-	if (rom.joy[0].btn.d_left)  { rom.carPos.x -= PLANET_DBG_MOVE_HORI_SPEED; }
-	if (rom.joy[0].btn.d_up)    { rom.carPos.z -= PLANET_DBG_MOVE_HORI_SPEED; }
-	if (rom.joy[0].btn.r)       { rom.carPos.y += PLANET_DBG_MOVE_VERT_SPEED; }
-	if (rom.joy[0].btn.l)       { rom.carPos.y -= PLANET_DBG_MOVE_VERT_SPEED; }
-	
-	// +==============================+
-	// |    Move Car with Joystick    |
-	// +==============================+
-	v2 stickVec = MakeV2((r32)rom.joy[0].stick_x / 127.0f, (r32)rom.joy[0].stick_y / 127.0f);
-	r32 stickLengthSquared = LengthSquaredV2(stickVec);
-	bool stickNotInDeadzone = (stickLengthSquared > STICK_DEADZONE * STICK_DEADZONE);
-	if (stickNotInDeadzone)
-	{
-		rom.carPos.x += stickVec.x * PLANET_ANALOG_MOVE_SPEED;
-		rom.carPos.z -= stickVec.y * PLANET_ANALOG_MOVE_SPEED;
-		rom.carRotation = AngleFixR32(AtanR32(stickVec.y, -stickVec.x));
-	}
-	
-	// +==================================+
-	// | Do Collision With CollisionScene |
-	// +==================================+
-	// if (rom.drawCollisionFace)
-	{
-		// rom.closestFace = FindClosestFace(&rom.planetCollision, rom.carPos, &rom.closestFaceDistance);
-		
-		rom.closestFace = FindCurrentCollisionFace(&rom.planetCollision, rom.carPos, COLL_GROUND_THICKNESS, &rom.carAltitude);
-		if (rom.closestFace != nullptr)
-		{
-			rom.carUpVec = rom.closestFace->normal;
-			if (rom.carAltitude < 0)
-			{
-				rom.carPos = AddV3(rom.carPos, ScaleV3(rom.closestFace->normal, -rom.carAltitude + EPSILON));
-			}
-		}
-	}
-	
-	// +==============================+
 	// |        Update Camera         |
 	// +==============================+
-	//TODO: Use cameraAngle
-	rom.cameraPos = SubV3(rom.carPos, CAR_OFFSET);
-	rom.cameraTarget = rom.carPos;
-	rom.cameraForward = NormalizeV3(SubV3(rom.carPos, rom.cameraPos));
+	for (u32 kartIndex = 0; kartIndex < MAX_KARTS; kartIndex++)
+	{
+		KartState* kart = &rom.karts[kartIndex];
+		if (kart->model != KartModel_None)
+		{
+			//TODO: Use cameraAngle, Update cameraAngle to tween towards kart->rotation
+			rom.cameraPos = SubV3(kart->pos, CAR_OFFSET);
+			rom.cameraTarget = kart->pos;
+			break;
+		}
+	}
+	if (AreEqualV3(rom.cameraTarget, rom.cameraPos)) { rom.cameraTarget = AddV3(rom.cameraPos, V3_Forward); } //prevent division by 0 for NormalizeV3 below
+	rom.cameraForward = NormalizeV3(SubV3(rom.cameraTarget, rom.cameraPos));
 	rom.cameraRight = CrossV3(rom.cameraForward, V3_Up);
 	rom.cameraUp = CrossV3(rom.cameraRight, rom.cameraForward);
 	rom.cameraViewMat = MakeLookAtMat4_RH(rom.cameraPos, rom.cameraTarget, rom.cameraUp);
@@ -273,19 +299,87 @@ void RenderRom()
 		glLightfv(GL_LIGHT1, GL_POSITION, fill_pos);
 		glLightfv(GL_LIGHT2, GL_POSITION, rim_pos);
 		
+		// +==============================+
+		// |         Draw Planet          |
+		// +==============================+
 		DrawModel(rom.planetModel, V3_Zero, V3_One, Quat_Identity);
-		v3 carRightVec = CrossV3(rom.carUpVec, MakeV3(CosR32(rom.carRotation), 0.0f, SinR32(rom.carRotation)));
-		v3 carForwardVec = CrossV3(rom.carUpVec, carRightVec);
-		mat3 carRotationMat = MakeMat3_Const(
-			carForwardVec.x, rom.carUpVec.x, carRightVec.x,
-			carForwardVec.y, rom.carUpVec.y, carRightVec.y,
-			carForwardVec.z, rom.carUpVec.z, carRightVec.z
-		);
-		DrawModel(rom.carModel, AddV3(rom.carPos, ScaleV3(rom.carUpVec, CAR_HEIGHT)), V3_One, QuatFromMat3(carRotationMat));
-		// DrawBoxAt(AddV3(rom.carPos, ScaleV3(carRightVec, 1.5f)), 0.2f);
-		DrawBoxAt(AddV3(rom.carPos, ScaleV3(carForwardVec, 1.5f)), 0.2f);
-		DrawBoxAt(AddV3(rom.carPos, ScaleV3(rom.carUpVec, 1.5f)), 0.2f);
 		
+		// +==============================+
+		// |          Draw Karts          |
+		// +==============================+
+		for (u32 kartIndex = 0; kartIndex < MAX_KARTS; kartIndex++)
+		{
+			KartState* kart = &rom.karts[kartIndex];
+			if (kart->model != KartModel_None)
+			{
+				r32 assetScale = GetKartModelAssetScale(kart->model);
+				
+				if (kart->modelAssetIndex == ASSET_UNLOADED_INDEX)
+				{
+					bool alreadyLoaded = false;
+					UNUSED(alreadyLoaded); //TODO: Check if this model asset is already loaded
+					
+					if (!alreadyLoaded)
+					{
+						if (rom.numKartAssets < MAX_KARTS)
+						{
+							const char* assetPath = GetKartModelAssetPath(kart->model);
+							debugf("Loading asset for KartModel_%s: \"%s\"...\n", GetKartModelName(kart->model), assetPath);
+							model64_t* model = model64_load(assetPath);
+							if (model != nullptr)
+							{
+								debugf("Loaded into [%lu]\n", rom.numKartAssets);
+								rom.kartAssets[rom.numKartAssets] = model;
+								kart->modelAssetIndex = rom.numKartAssets;
+								rom.numKartAssets++;
+							}
+							else
+							{
+								debugf("Failed to load model64 for KartModel_%s from \"%s\"\n", GetKartModelName(kart->model), assetPath);
+								kart->modelAssetIndex = ASSET_FAILED_INDEX;
+							}
+						}
+						else
+						{
+							debugf("Can't load model64 for KartModel_%s because we've filled the asset array!\n", GetKartModelName(kart->model));
+							kart->modelAssetIndex = ASSET_FAILED_INDEX;
+						}
+					}
+				}
+				
+				v3 kartRightVec = CrossV3(kart->upVec, MakeV3(CosR32(kart->rotation), 0.0f, SinR32(kart->rotation)));
+				v3 kartForwardVec = CrossV3(kart->upVec, kartRightVec);
+				
+				if (kart->modelAssetIndex < ArrayCount(rom.kartAssets) && rom.kartAssets[kart->modelAssetIndex] != nullptr)
+				{
+					mat3 kartRotationMat = MakeMat3_Const(
+						kartForwardVec.x, kart->upVec.x, kartRightVec.x,
+						kartForwardVec.y, kart->upVec.y, kartRightVec.y,
+						kartForwardVec.z, kart->upVec.z, kartRightVec.z
+					);
+					
+					DrawModel(
+						rom.kartAssets[kart->modelAssetIndex],
+						AddV3(kart->pos, ScaleV3(kart->upVec, GetKartModelClearance(kart->model))),
+						FillV3(assetScale),
+						QuatFromMat3(kartRotationMat)
+					);
+				}
+				
+				#if DEBUG_BUILD
+				if (rom.drawCollisionFace)
+				{
+					// DrawBoxAt(AddV3(kart->pos, ScaleV3(kartRightVec, 1.5f)), 0.2f);
+					DrawBoxAt(AddV3(kart->pos, ScaleV3(kartForwardVec, 1.5f)), 0.2f);
+					DrawBoxAt(AddV3(kart->pos, ScaleV3(kart->upVec, 1.5f)), 0.2f);
+				}
+				#endif
+			}
+		}
+		
+		// +==============================+
+		// |   Debug Draw Closest Face    |
+		// +==============================+
 		if (rom.closestFace != nullptr && rom.drawCollisionFace)
 		{
 			v3 vert0 = rom.closestFace->verts[0];
@@ -323,19 +417,26 @@ void RenderRom()
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 15, rom.rtcAvailable      ? "RTC: Available"           : "RTC: NOT AVAILABLE"          );
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 25, rom.usbDebugAvailable ? "USB Debugging: Available" : "USB Debugging: NOT AVAILABLE");
 	r32 avgFrameTime = (r32)(rom.frameTimes[0] + rom.frameTimes[1] + rom.frameTimes[2] + rom.frameTimes[3] + rom.frameTimes[4]) / 5.0f;
-	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 15, "FrameTime: %.1fms (%.1fFPS)", avgFrameTime, 1000.0f / avgFrameTime);
-	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 30, "romTime: %llu,%llums", (rom.romTime/1000), (rom.romTime%1000));
-	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 45, "pos: (%g, %g, %g)", rom.carPos.x, rom.carPos.y, rom.carPos.z);
+	int textY = 15;
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, textY, "FrameTime: %.1fms (%.1fFPS)", avgFrameTime, 1000.0f / avgFrameTime); textY += 15;
+	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, textY, "romTime: %llu,%llums", (rom.romTime/1000), (rom.romTime%1000)); textY += 15;
+	for (u32 kartIndex = 0; kartIndex < MAX_KARTS; kartIndex++)
+	{
+		KartState* kart = &rom.karts[kartIndex];
+		rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, textY, "Kart[%lu]: (%g, %g, %g) %.0f %s%.2f %s surface",
+			kartIndex,
+			kart->pos.x, kart->pos.y, kart->pos.z,
+			ToDegrees32(kart->rotation),
+			(kart->altitude >= 0.0f) ? "+" : "",
+			kart->altitude,
+			(kart->altitude >= 0.0f) ? "above" : "below"
+		);
+		textY += 15;
+	}
+	
 	if (rom.closestFace != nullptr && rom.drawCollisionFace)
 	{
-		rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 60, "closest: face[%lu]", (u32)(rom.closestFace - rom.planetCollision.faces));
-		r32 carDot = DotV3(rom.carPos, rom.closestFace->normal);
-		// r32 carAltitude = (carDot - rom.closestFace->planeDist);
-		rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, 75, "car: %s%.2f %s surface",
-			(rom.carAltitude >= 0.0f) ? "+" : "",
-			rom.carAltitude,
-			(rom.carAltitude >= 0.0f) ? "above" : "below"
-		);
+		rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, textY, "closest: face[%lu]", (u32)(rom.closestFace - rom.planetCollision.faces)); textY += 15;
 	}
 	
 	// Test_RenderDfsEntries();

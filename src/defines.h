@@ -21,6 +21,9 @@ Description:
 #define COLL_EDGE_DIST 0.5f
 #define CAR_HEIGHT 0.2f
 
+#define MAX_PLAYERS  4 //same as JOYPAD_PORT_COUNT
+#define MAX_KARTS    4
+
 #define MODELS_FOLDER "rom:/models"
 
 #define ERROR_MODEL_PATH    MODELS_FOLDER "/error.model64"
@@ -32,5 +35,8 @@ Description:
 
 // #define PLANET_MODEL_PATH   MODELS_FOLDER "/proto_planet1.model64"
 #define PLANET_MODEL_PATH   MODELS_FOLDER "/planet_beach_test.model64"
+
+#define ASSET_UNLOADED_INDEX 0xFE
+#define ASSET_FAILED_INDEX   0xFF
 
 #endif //  _DEFINES_H

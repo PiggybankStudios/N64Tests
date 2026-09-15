@@ -28,11 +28,10 @@ struct RomState
 	u32 frameTimeWriteIndex;
 	r32 frameTimes[5];
 	
-	joypad_inputs_t joy[4];
-	joypad_inputs_t prevJoy[4];
+	joypad_inputs_t joy[JOYPAD_PORT_COUNT];
+	joypad_inputs_t prevJoy[JOYPAD_PORT_COUNT];
 	
 	model64_t* unitBoxModel;
-	model64_t* carModel;
 	model64_t* planetModel;
 	CollisionScene planetCollision;
 	
@@ -49,9 +48,10 @@ struct RomState
 	v3 cameraForward; v3 cameraUp; v3 cameraRight;
 	mat4 cameraViewMat;
 	
-	v3 origCarPos;
-	v3 carPos;
-	v3 carUpVec;
+	u32 numKartAssets;
+	model64_t* kartAssets[MAX_KARTS];
+	v3 origKartPos[MAX_KARTS];
+	KartState karts[MAX_KARTS];
 };
 
 extern RomState rom;

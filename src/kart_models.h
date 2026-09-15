@@ -15,15 +15,18 @@ Description:
 	** KART_MODEL should be defined with a code-generating template before each #include
 */
 
-// assetPath  = Path to the model64 asset in the DFS
-// assetScale = fixed scale to apply when rendering the model asset in-world
-// clearance  = distance from ground to model origin
-// width      = distance from model origin to left/right wheels
-// foreLength = distance from model origin to front tires
-// backLength = distance from model origin to back tires
+// codeNameLowercase = Name used in code with the first letter lowercase
+// CodeNameUppercase = Name used in code with the first letter uppercase (the enum name will be KartModel_CodeNameUppercase)
+// displayName       = Name used for display to the player when selecting this kart
+// assetPath         = Path to the model64 asset in the DFS
+// assetScale        = fixed scale to apply when rendering the model asset in-world
+// clearance         = distance from ground to model origin
+// width             = distance from model origin to left/right wheels
+// foreLength        = distance from model origin to front tires
+// backLength        = distance from model origin to back tires
 
 #ifndef KART_MODEL
-#define KART_MODEL(codeNameLowercase, codeNameUppercase, displayName, assetPath, assetScale, clearance, width, foreLength, backLength) //nothing
+#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, clearance, width, foreLength, backLength) //nothing
 #endif
 
 //         lowercase,  uppercase,  display,      assetPath,                            scale, clear,  width,   fore,   back
