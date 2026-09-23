@@ -170,9 +170,39 @@ void UpdateRom()
 	if (rom.joy[0].btn.start   && !rom.prevJoy[0].btn.start)   { debugf("Start Button was Pressed!\n");   }
 	
 	// +==============================+
-	// |    Press Start to Reboot     |
+	// |  Press L+R+Start to Reboot   |
 	// +==============================+
-	if (rom.joy[0].btn.start && !rom.prevJoy[0].btn.start) { debugf("Rebooting!\n"); SoftRebootN64(); }
+	if (rom.joy[0].btn.l && rom.joy[0].btn.r && rom.joy[0].btn.start) { debugf("Rebooting!\n"); SoftRebootN64(); }
+	
+	// +====================================+
+	// | Press C-Left/Right to Change Kart  |
+	// +====================================+
+	if (rom.joy[0].btn.c_left && !rom.prevJoy[0].btn.c_left)
+	{
+		for (u32 kartIndex = 0; kartIndex < MAX_PLAYERS; kartIndex++)
+		{
+			KartState* kart = &rom.karts[kartIndex];
+			if (kart->model != KartModel_None)
+			{
+				kart->model = (KartModel)((u32)kart->model - 1);
+				if (kart->model == KartModel_None) { kart->model = (KartModel_Count-1); }
+				kart->modelAssetIndex = ASSET_UNLOADED_INDEX;
+			}
+		}
+	}
+	if (rom.joy[0].btn.c_right && !rom.prevJoy[0].btn.c_right)
+	{
+		for (u32 kartIndex = 0; kartIndex < MAX_PLAYERS; kartIndex++)
+		{
+			KartState* kart = &rom.karts[kartIndex];
+			if (kart->model != KartModel_None)
+			{
+				kart->model = (KartModel)(((u32)kart->model + 1) % KartModel_Count);
+				if (kart->model == KartModel_None) { kart->model = (KartModel)((u32)kart->model+1); }
+				kart->modelAssetIndex = ASSET_UNLOADED_INDEX;
+			}
+		}
+	}
 	
 	// +--------------------------------------------------------------+
 	// |                         Update Karts                         |
@@ -182,24 +212,26 @@ void UpdateRom()
 		KartState* kart = &rom.karts[kartIndex];
 		if (kart->model != KartModel_None)
 		{
-			// +==============================+
-			// |  Reset Kart Position with Z  |
-			// +==============================+
-			if (rom.joy[kartIndex].btn.z && !rom.prevJoy[kartIndex].btn.z)
+			r32 kartSpeed = GetKartModelSpeed(kart->model);
+			
+			// +================================+
+			// | Reset Kart Position with Start |
+			// +================================+
+			if (rom.joy[kartIndex].btn.start && !rom.prevJoy[kartIndex].btn.start)
 			{
 				debugf("Resetting kart[%lu]\n", kartIndex);
 				kart->pos = rom.origKartPos[kartIndex];
 			}
 			
-			// +==============================+
-			// |  Debug Move Kart with DPAD   |
-			// +==============================+
-			if (rom.joy[kartIndex].btn.d_right) { kart->pos.x += PLANET_DBG_MOVE_HORI_SPEED; }
-			if (rom.joy[kartIndex].btn.d_down)  { kart->pos.z += PLANET_DBG_MOVE_HORI_SPEED; }
-			if (rom.joy[kartIndex].btn.d_left)  { kart->pos.x -= PLANET_DBG_MOVE_HORI_SPEED; }
-			if (rom.joy[kartIndex].btn.d_up)    { kart->pos.z -= PLANET_DBG_MOVE_HORI_SPEED; }
-			if (rom.joy[kartIndex].btn.r)       { kart->pos.y += PLANET_DBG_MOVE_VERT_SPEED; }
-			if (rom.joy[kartIndex].btn.l)       { kart->pos.y -= PLANET_DBG_MOVE_VERT_SPEED; }
+			// +====================================+
+			// | Debug Move Kart with DPAD and L/R  |
+			// +====================================+
+			if (rom.joy[kartIndex].btn.d_right) { kart->pos.x += PLANET_DBG_MOVE_HORI_SPEED * kartSpeed; }
+			if (rom.joy[kartIndex].btn.d_down)  { kart->pos.z += PLANET_DBG_MOVE_HORI_SPEED * kartSpeed; }
+			if (rom.joy[kartIndex].btn.d_left)  { kart->pos.x -= PLANET_DBG_MOVE_HORI_SPEED * kartSpeed; }
+			if (rom.joy[kartIndex].btn.d_up)    { kart->pos.z -= PLANET_DBG_MOVE_HORI_SPEED * kartSpeed; }
+			if (rom.joy[kartIndex].btn.r)       { kart->pos.y += PLANET_DBG_MOVE_VERT_SPEED * kartSpeed; }
+			if (rom.joy[kartIndex].btn.z)       { kart->pos.y -= PLANET_DBG_MOVE_VERT_SPEED * kartSpeed; }
 			
 			// +==============================+
 			// |   Move Kart with Joystick    |
@@ -209,8 +241,8 @@ void UpdateRom()
 			bool stickNotInDeadzone = (stickLengthSquared > STICK_DEADZONE * STICK_DEADZONE);
 			if (stickNotInDeadzone)
 			{
-				kart->pos.x += stickVec.x * PLANET_ANALOG_MOVE_SPEED;
-				kart->pos.z -= stickVec.y * PLANET_ANALOG_MOVE_SPEED;
+				kart->pos.x += stickVec.x * PLANET_ANALOG_MOVE_SPEED * kartSpeed;
+				kart->pos.z -= stickVec.y * PLANET_ANALOG_MOVE_SPEED * kartSpeed;
 				kart->rotation = AngleFixR32(AtanR32(stickVec.y, -stickVec.x));
 			}
 			
@@ -316,26 +348,37 @@ void RenderRom()
 				
 				if (kart->modelAssetIndex == ASSET_UNLOADED_INDEX)
 				{
+					const char* assetPathNt = GetKartModelAssetPath(kart->model);
+					Str8 assetPath = MakeStr8Nt(assetPathNt);
+					
 					bool alreadyLoaded = false;
-					UNUSED(alreadyLoaded); //TODO: Check if this model asset is already loaded
+					for (u32 assetIndex = 0; assetIndex < ArrayCount(rom.kartAssets); assetIndex++)
+					{
+						if (rom.kartAssets[assetIndex] != nullptr && StrExactEquals(rom.kartAssetPaths[assetIndex], assetPath))
+						{
+							alreadyLoaded = true;
+							kart->modelAssetIndex = assetIndex;
+							break;
+						}
+					}
 					
 					if (!alreadyLoaded)
 					{
 						if (rom.numKartAssets < MAX_KARTS)
 						{
-							const char* assetPath = GetKartModelAssetPath(kart->model);
-							debugf("Loading asset for KartModel_%s: \"%s\"...\n", GetKartModelName(kart->model), assetPath);
-							model64_t* model = model64_load(assetPath);
+							debugf("Loading asset for KartModel_%s: \"%s\"...\n", GetKartModelName(kart->model), assetPathNt);
+							model64_t* model = model64_load(assetPathNt);
 							if (model != nullptr)
 							{
 								debugf("Loaded into [%lu]\n", rom.numKartAssets);
 								rom.kartAssets[rom.numKartAssets] = model;
+								rom.kartAssetPaths[rom.numKartAssets] = assetPath;
 								kart->modelAssetIndex = rom.numKartAssets;
 								rom.numKartAssets++;
 							}
 							else
 							{
-								debugf("Failed to load model64 for KartModel_%s from \"%s\"\n", GetKartModelName(kart->model), assetPath);
+								debugf("Failed to load model64 for KartModel_%s from \"%s\"\n", GetKartModelName(kart->model), assetPathNt);
 								kart->modelAssetIndex = ASSET_FAILED_INDEX;
 							}
 						}
@@ -347,7 +390,8 @@ void RenderRom()
 					}
 				}
 				
-				v3 kartRightVec = CrossV3(kart->upVec, MakeV3(CosR32(kart->rotation), 0.0f, SinR32(kart->rotation)));
+				r32 assetRotation = ToRadians32(GetKartModelAssetRotation(kart->model));
+				v3 kartRightVec = CrossV3(kart->upVec, MakeV3(CosR32(kart->rotation + assetRotation), 0.0f, SinR32(kart->rotation + assetRotation)));
 				v3 kartForwardVec = CrossV3(kart->upVec, kartRightVec);
 				
 				if (kart->modelAssetIndex < ArrayCount(rom.kartAssets) && rom.kartAssets[kart->modelAssetIndex] != nullptr)

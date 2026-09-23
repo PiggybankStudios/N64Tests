@@ -28,11 +28,46 @@
 		},
 		{
 			"name": "PigCore",
-			"path": "core/src"
+			"path": "core/src",
 		},
 		{
 			"name": "PigBuild",
-			"path": "../pig_build/src"
+			"path": "../pig_build/src",
 		},
-	]
+	],
+	"settings":
+	{
+		"build_options":
+		[
+		],
+		"custom_constants":
+		[
+			"KartModel_None",
+			"KartModel_ProtoKart1",
+			"KartModel_ProtoKart2",
+			"KartModel_UnitBox",
+		],
+		"custom_functions":
+		[
+			"inline const char* GetKartModelAssetPath(KartModel model)",
+			"inline const char* GetKartModelDisplayName(KartModel model)",
+			"inline const char* GetKartModelName(KartModel model)",
+			"inline r32 GetKartModelAcceleration(KartModel model)",
+			"inline r32 GetKartModelAssetScale(KartModel model)",
+			"inline r32 GetKartModelBackLength(KartModel model)",
+			"inline r32 GetKartModelClearance(KartModel model)",
+			"inline r32 GetKartModelForeLength(KartModel model)",
+			"inline r32 GetKartModelSpeed(KartModel model)",
+			"inline r32 GetKartModelTurnRadius(KartModel model)",
+			"inline r32 GetKartModelWidth(KartModel model)",
+		],
+		"custom_globals":
+		[
+		],
+		"custom_types":
+		[
+			"KartModel",
+			"KartState",
+		],
+	},
 }

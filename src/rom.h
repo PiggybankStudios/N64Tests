@@ -49,6 +49,7 @@ struct RomState
 	mat4 cameraViewMat;
 	
 	u32 numKartAssets;
+	Str8 kartAssetPaths[MAX_KARTS];
 	model64_t* kartAssets[MAX_KARTS];
 	v3 origKartPos[MAX_KARTS];
 	KartState karts[MAX_KARTS];
