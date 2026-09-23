@@ -5,4 +5,4 @@ This is a small project that I am using as a testbed while ramping up on Nintend
 ## Screenshots
 
 ![Screenshot 2](/media/screenshot2.png)
-![Screenshot 1](/media/screenshot1.png)
+![Screenshot 3](/media/screenshot3.png)
