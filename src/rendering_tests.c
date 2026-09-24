@@ -10,9 +10,14 @@ Description:
 
 void Test_RenderGradientWithBoxes()
 {
+	rdpq_set_mode_fill(RGBA32(0xFF, 0xFF, 0xFF, 0xFF));
+	Color32 topColor = MakeColor(0x25, 0x12, 0x14, 0xFF);
+	Color32 bottomColor = MakeColor(0xFF, 0xD8, 0x8B, 0xFF);
 	for (int y = 0; y < 480; y+=5)
 	{
-		rdpq_set_mode_fill(RGBA32(180, 180, 180+y/2, 0xFF));
+		Color32 barColor = Color32Lerp(topColor, bottomColor, (r32)(y+5) / 480.0f);
+		// debugf("Line[%d] is r=0x%02X g=0x%02X b=0x%02X a=0x%02X\n", y, barColor.r, barColor.g, barColor.b, barColor.a);
+		rdpq_set_fill_color(RGBA32(barColor.r, barColor.g, barColor.b, 0xFF));
 		rdpq_fill_rectangle(0, y, 640, y+5);
 	}
 }

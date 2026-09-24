@@ -12,11 +12,14 @@ Description:
 #define DEBUG_FONT_ID   10
 
 #define PLANET_DBG_MOVE_HORI_SPEED 0.7f
-#define PLANET_DBG_MOVE_VERT_SPEED 0.1f
+#define PLANET_DBG_MOVE_VERT_SPEED 0.2f
 #define PLANET_ANALOG_MOVE_SPEED 0.4f
 
 #define STICK_DEADZONE 0.1f
-#define CAR_OFFSET MakeV3(0.0f, -1.5f, -6.0f)
+// #define CAR_OFFSET MakeV3(0.0f, -1.5f, -6.0f)
+#define CAMERA_DIST_X   3.0f
+#define CAMERA_DIST_Y   2.5f
+#define CAMERA_TARGET_ABOVE_CAR_Y   2.0f
 #define COLL_GROUND_THICKNESS 10.0f
 #define COLL_EDGE_DIST 0.5f
 

@@ -241,9 +241,12 @@ void UpdateRom()
 			bool stickNotInDeadzone = (stickLengthSquared > STICK_DEADZONE * STICK_DEADZONE);
 			if (stickNotInDeadzone)
 			{
-				kart->pos.x += stickVec.x * PLANET_ANALOG_MOVE_SPEED * kartSpeed;
-				kart->pos.z -= stickVec.y * PLANET_ANALOG_MOVE_SPEED * kartSpeed;
-				kart->rotation = AngleFixR32(AtanR32(stickVec.y, -stickVec.x));
+				r32 stickLength = SqrtR32(stickLengthSquared);
+				r32 stickAngle = AngleFixR32(-AtanR32(stickVec.y, stickVec.x) + HalfPi32 + rom.cameraAngle);
+				stickVec = MakeV2(CosR32(stickAngle), SinR32(stickAngle));
+				kart->pos.x -= stickVec.x * PLANET_ANALOG_MOVE_SPEED * stickLength * kartSpeed;
+				kart->pos.z -= stickVec.y * PLANET_ANALOG_MOVE_SPEED * stickLength * kartSpeed;
+				kart->rotation = stickAngle;
 			}
 			
 			// +==================================+
@@ -281,9 +284,15 @@ void UpdateRom()
 		KartState* kart = &rom.karts[kartIndex];
 		if (kart->model != KartModel_None)
 		{
-			//TODO: Use cameraAngle, Update cameraAngle to tween towards kart->rotation
-			rom.cameraPos = SubV3(kart->pos, CAR_OFFSET);
+			r32 cameraKartAngleDiff = AngleDiffR32(kart->rotation, rom.cameraAngle);
+			if (AbsR32(cameraKartAngleDiff) > 0.01f)
+			{
+				rom.cameraAngle = AngleFixR32(rom.cameraAngle + cameraKartAngleDiff/8.0f);
+			}
+			else { rom.cameraAngle = kart->rotation; }
+			rom.cameraPos = AddV3(kart->pos, MakeV3(CosR32(rom.cameraAngle) * CAMERA_DIST_X, CAMERA_DIST_Y, SinR32(rom.cameraAngle) * CAMERA_DIST_X));
 			rom.cameraTarget = kart->pos;
+			rom.cameraTarget.y += CAMERA_TARGET_ABOVE_CAR_Y;
 			break;
 		}
 	}
@@ -458,24 +467,27 @@ void RenderRom()
 	// +==============================+
 	// |          Render HUD          |
 	// +==============================+
+	int textY = 15;
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 15, rom.rtcAvailable      ? "RTC: Available"           : "RTC: NOT AVAILABLE"          );
 	// rdpq_text_print(NULL, DEBUG_FONT_ID, 15, 25, rom.usbDebugAvailable ? "USB Debugging: Available" : "USB Debugging: NOT AVAILABLE");
 	r32 avgFrameTime = (r32)(rom.frameTimes[0] + rom.frameTimes[1] + rom.frameTimes[2] + rom.frameTimes[3] + rom.frameTimes[4]) / 5.0f;
-	int textY = 15;
 	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, textY, "FrameTime: %.1fms (%.1fFPS)", avgFrameTime, 1000.0f / avgFrameTime); textY += 15;
 	rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, textY, "romTime: %llu,%llums", (rom.romTime/1000), (rom.romTime%1000)); textY += 15;
 	for (u32 kartIndex = 0; kartIndex < MAX_KARTS; kartIndex++)
 	{
 		KartState* kart = &rom.karts[kartIndex];
-		rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, textY, "Kart[%lu]: (%g, %g, %g) %.0f %s%.2f %s surface",
-			kartIndex,
-			kart->pos.x, kart->pos.y, kart->pos.z,
-			ToDegrees32(kart->rotation),
-			(kart->altitude >= 0.0f) ? "+" : "",
-			kart->altitude,
-			(kart->altitude >= 0.0f) ? "above" : "below"
-		);
-		textY += 15;
+		if (kart->model != KartModel_None)
+		{
+			rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, textY, "Kart[%lu]: (%g, %g, %g) %.0f %s%.2f %s surface",
+				kartIndex,
+				kart->pos.x, kart->pos.y, kart->pos.z,
+				ToDegrees32(kart->rotation),
+				(kart->altitude >= 0.0f) ? "+" : "",
+				kart->altitude,
+				(kart->altitude >= 0.0f) ? "above" : "below"
+			);
+			textY += 15;
+		}
 	}
 	
 	if (rom.closestFace != nullptr && rom.drawCollisionFace)

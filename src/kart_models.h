@@ -36,6 +36,6 @@ Description:
 /* KartModel_UnitBox    */ KART_MODEL(unitBox,    UnitBox,    "Box",        MODELS_FOLDER "/unit_box.model64",    0.750f,     0.0f, 0.375f, 0.375f, 0.375f, 0.375f, 2.0f,  2.0f, 0.5f)
 /* KartModel_ProtoKart1 */ KART_MODEL(protoKart1, ProtoKart1, "Prototype1", MODELS_FOLDER "/proto_kart2.model64", 1.000f,   180.0f, 0.200f, 0.400f, 0.400f, 0.400f, 1.0f,  1.0f, 1.2f)
 /* KartModel_ProtoKart2 */ KART_MODEL(protoKart2, ProtoKart2, "Prototype2", MODELS_FOLDER "/ash_kart.model64",    1.000f,     0.0f, 0.200f, 0.400f, 0.400f, 0.400f, 1.4f,  0.8f, 1.0f)
-/* KartModel_ProtoKart3 */ KART_MODEL(protoKart3, ProtoKart3, "Prototype3", MODELS_FOLDER "/proto_kart3.model64", 1.000f,     0.0f, 0.200f, 0.400f, 0.400f, 0.400f, 1.4f,  0.8f, 1.0f)
+/* KartModel_ProtoKart3 */ KART_MODEL(protoKart3, ProtoKart3, "Prototype3", MODELS_FOLDER "/proto_kart3.model64", 1.000f,     0.0f, 0.200f, 0.400f, 0.400f, 0.400f, 2.4f,  0.8f, 1.0f)
 
 #undef KART_MODEL

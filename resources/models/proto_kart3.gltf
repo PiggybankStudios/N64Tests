@@ -25,17 +25,7 @@
 		},
 		{
 			"mesh":2,
-			"name":"Alien",
-			"scale":[
-				0.2688007056713104,
-				0.3840010166168213,
-				0.2688007056713104
-			],
-			"translation":[
-				-0.3378947973251343,
-				0.3465910255908966,
-				0
-			]
+			"name":"Alien"
 		}
 	],
 	"materials":[
@@ -221,29 +211,29 @@
 		{
 			"bufferView":8,
 			"componentType":5126,
-			"count":366,
+			"count":358,
 			"max":[
-				0.9903557300567627,
-				1.4995288848876953,
-				0.9999999403953552
+				-0.1284145712852478,
+				0.7379054427146912,
+				0.19577467441558838
 			],
 			"min":[
-				-0.9510578513145447,
-				-0.5257376432418823,
-				-0.9999999403953552
+				-0.5084941983222961,
+				0.20980913937091827,
+				-0.19577467441558838
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":9,
 			"componentType":5126,
-			"count":366,
+			"count":358,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":10,
 			"componentType":5126,
-			"count":366,
+			"count":358,
 			"type":"VEC2"
 		},
 		{
@@ -304,26 +294,26 @@
 		},
 		{
 			"buffer":0,
-			"byteLength":4392,
+			"byteLength":4296,
 			"byteOffset":19800,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":4392,
-			"byteOffset":24192,
+			"byteLength":4296,
+			"byteOffset":24096,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":2928,
-			"byteOffset":28584,
+			"byteLength":2864,
+			"byteOffset":28392,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":876,
-			"byteOffset":31512,
+			"byteOffset":31256,
 			"target":34963
 		}
 	],
@@ -339,7 +329,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":32388,
+			"byteLength":32132,
 			"uri":"proto_kart3.bin"
 		}
 	]

@@ -22,6 +22,7 @@ Description:
 #include "struct/struct_matrices.h"
 #include "struct/struct_quaternion.h"
 #include "struct/struct_rectangles.h"
+#include "struct/struct_color.h"
 
 // #include "base/base_all.h"
 // #include "struct/struct_all.h"
