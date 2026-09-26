@@ -108,9 +108,9 @@ void InitRom()
 		rom.karts[kartIndex].upVec = V3_Up;
 	}
 	
-	// rom.karts[0].model = KartModel_UnitBox;
-	// rom.karts[0].model = KartModel_ProtoKart1;
-	rom.karts[0].model = KartModel_ProtoKart2;
+	// rom.karts[0].design = KartDesign_UnitBox;
+	// rom.karts[0].design = KartDesign_ProtoKart1;
+	rom.karts[0].design = KartDesign_ProtoKart2;
 	rom.karts[0].pos = MakeV3(-1.5f, 1.7f, 11.0f);
 	rom.karts[0].rotation = 0;
 	rom.karts[0].upVec = V3_Up;
@@ -182,10 +182,10 @@ void UpdateRom()
 		for (u32 kartIndex = 0; kartIndex < MAX_PLAYERS; kartIndex++)
 		{
 			KartState* kart = &rom.karts[kartIndex];
-			if (kart->model != KartModel_None)
+			if (kart->design != KartDesign_None)
 			{
-				kart->model = (KartModel)((u32)kart->model - 1);
-				if (kart->model == KartModel_None) { kart->model = (KartModel_Count-1); }
+				kart->design = (KartDesign)((u32)kart->design - 1);
+				if (kart->design == KartDesign_None) { kart->design = (KartDesign_Count-1); }
 				kart->modelAssetIndex = ASSET_UNLOADED_INDEX;
 			}
 		}
@@ -195,10 +195,10 @@ void UpdateRom()
 		for (u32 kartIndex = 0; kartIndex < MAX_PLAYERS; kartIndex++)
 		{
 			KartState* kart = &rom.karts[kartIndex];
-			if (kart->model != KartModel_None)
+			if (kart->design != KartDesign_None)
 			{
-				kart->model = (KartModel)(((u32)kart->model + 1) % KartModel_Count);
-				if (kart->model == KartModel_None) { kart->model = (KartModel)((u32)kart->model+1); }
+				kart->design = (KartDesign)(((u32)kart->design + 1) % KartDesign_Count);
+				if (kart->design == KartDesign_None) { kart->design = (KartDesign)((u32)kart->design+1); }
 				kart->modelAssetIndex = ASSET_UNLOADED_INDEX;
 			}
 		}
@@ -210,9 +210,9 @@ void UpdateRom()
 	for (u32 kartIndex = 0; kartIndex < MAX_PLAYERS; kartIndex++)
 	{
 		KartState* kart = &rom.karts[kartIndex];
-		if (kart->model != KartModel_None)
+		if (kart->design != KartDesign_None)
 		{
-			r32 kartSpeed = GetKartModelSpeed(kart->model);
+			r32 kartSpeed = GetKartDesignSpeed(kart->design);
 			
 			// +================================+
 			// | Reset Kart Position with Start |
@@ -282,7 +282,7 @@ void UpdateRom()
 	for (u32 kartIndex = 0; kartIndex < MAX_KARTS; kartIndex++)
 	{
 		KartState* kart = &rom.karts[kartIndex];
-		if (kart->model != KartModel_None)
+		if (kart->design != KartDesign_None)
 		{
 			r32 cameraKartAngleDiff = AngleDiffR32(kart->rotation, rom.cameraAngle);
 			if (AbsR32(cameraKartAngleDiff) > 0.01f)
@@ -351,13 +351,13 @@ void RenderRom()
 		for (u32 kartIndex = 0; kartIndex < MAX_KARTS; kartIndex++)
 		{
 			KartState* kart = &rom.karts[kartIndex];
-			if (kart->model != KartModel_None)
+			if (kart->design != KartDesign_None)
 			{
-				r32 assetScale = GetKartModelAssetScale(kart->model);
+				r32 assetScale = GetKartDesignAssetScale(kart->design);
 				
 				if (kart->modelAssetIndex == ASSET_UNLOADED_INDEX)
 				{
-					const char* assetPathNt = GetKartModelAssetPath(kart->model);
+					const char* assetPathNt = GetKartDesignAssetPath(kart->design);
 					Str8 assetPath = MakeStr8Nt(assetPathNt);
 					
 					bool alreadyLoaded = false;
@@ -375,7 +375,7 @@ void RenderRom()
 					{
 						if (rom.numKartAssets < MAX_KARTS)
 						{
-							debugf("Loading asset for KartModel_%s: \"%s\"...\n", GetKartModelName(kart->model), assetPathNt);
+							debugf("Loading asset for KartDesign_%s: \"%s\"...\n", GetKartDesignName(kart->design), assetPathNt);
 							model64_t* model = model64_load(assetPathNt);
 							if (model != nullptr)
 							{
@@ -387,19 +387,19 @@ void RenderRom()
 							}
 							else
 							{
-								debugf("Failed to load model64 for KartModel_%s from \"%s\"\n", GetKartModelName(kart->model), assetPathNt);
+								debugf("Failed to load model64 for KartDesign_%s from \"%s\"\n", GetKartDesignName(kart->design), assetPathNt);
 								kart->modelAssetIndex = ASSET_FAILED_INDEX;
 							}
 						}
 						else
 						{
-							debugf("Can't load model64 for KartModel_%s because we've filled the asset array!\n", GetKartModelName(kart->model));
+							debugf("Can't load model64 for KartDesign_%s because we've filled the asset array!\n", GetKartDesignName(kart->design));
 							kart->modelAssetIndex = ASSET_FAILED_INDEX;
 						}
 					}
 				}
 				
-				r32 assetRotation = ToRadians32(GetKartModelAssetRotation(kart->model));
+				r32 assetRotation = ToRadians32(GetKartDesignAssetRotation(kart->design));
 				v3 kartRightVec = CrossV3(kart->upVec, MakeV3(CosR32(kart->rotation + assetRotation), 0.0f, SinR32(kart->rotation + assetRotation)));
 				v3 kartForwardVec = CrossV3(kart->upVec, kartRightVec);
 				
@@ -413,7 +413,7 @@ void RenderRom()
 					
 					DrawModel(
 						rom.kartAssets[kart->modelAssetIndex],
-						AddV3(kart->pos, ScaleV3(kart->upVec, GetKartModelClearance(kart->model))),
+						AddV3(kart->pos, ScaleV3(kart->upVec, GetKartDesignClearance(kart->design))),
 						FillV3(assetScale),
 						QuatFromMat3(kartRotationMat)
 					);
@@ -476,7 +476,7 @@ void RenderRom()
 	for (u32 kartIndex = 0; kartIndex < MAX_KARTS; kartIndex++)
 	{
 		KartState* kart = &rom.karts[kartIndex];
-		if (kart->model != KartModel_None)
+		if (kart->design != KartDesign_None)
 		{
 			rdpq_text_printf(NULL, DEBUG_FONT_ID, 15, textY, "Kart[%lu]: (%g, %g, %g) %.0f %s%.2f %s surface",
 				kartIndex,

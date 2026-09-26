@@ -7,20 +7,20 @@ Date:   09\14\2026
 #ifndef _KART_H
 #define _KART_H
 
-typedef enum KartModel KartModel;
-enum KartModel
+typedef enum KartDesign KartDesign;
+enum KartDesign
 {
-	KartModel_None = 0,
-	#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
-		KartModel_##CodeNameUppercase,
-	#include "kart_models.h"
-	KartModel_Count,
+	KartDesign_None = 0,
+	#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+		KartDesign_##CodeNameUppercase,
+	#include "kart_designs.h"
+	KartDesign_Count,
 };
 
 typedef struct KartState KartState;
 struct KartState
 {
-	KartModel model;
+	KartDesign design;
 	u32 modelAssetIndex;
 	v3 pos;
 	v3 upVec;
@@ -31,125 +31,125 @@ struct KartState
 	r32 altitude; //distance above/below drivingFace
 };
 
-inline const char* GetKartModelName(KartModel model)
+inline const char* GetKartDesignName(KartDesign design)
 {
-	const char* values[KartModel_Count] = {
+	const char* values[KartDesign_Count] = {
 		"None",
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			#CodeNameUppercase,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return (model < KartModel_Count) ? values[model] : "Unknown";
+	return (design < KartDesign_Count) ? values[design] : "Unknown";
 }
-inline const char* GetKartModelDisplayName(KartModel model)
+inline const char* GetKartDesignDisplayName(KartDesign design)
 {
-	const char* values[KartModel_Count] = {
+	const char* values[KartDesign_Count] = {
 		"ERROR0",
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			#displayName,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
-inline const char* GetKartModelAssetPath(KartModel model)
+inline const char* GetKartDesignAssetPath(KartDesign design)
 {
-	const char* values[KartModel_Count] = {
+	const char* values[KartDesign_Count] = {
 		"",
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			assetPath,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
-inline r32 GetKartModelAssetScale(KartModel model)
+inline r32 GetKartDesignAssetScale(KartDesign design)
 {
-	r32 values[KartModel_Count] = {
+	r32 values[KartDesign_Count] = {
 		1.0f,
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			assetScale,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
-inline r32 GetKartModelAssetRotation(KartModel model)
+inline r32 GetKartDesignAssetRotation(KartDesign design)
 {
-	r32 values[KartModel_Count] = {
+	r32 values[KartDesign_Count] = {
 		1.0f,
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			assetRotation,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
-inline r32 GetKartModelClearance(KartModel model)
+inline r32 GetKartDesignClearance(KartDesign design)
 {
-	const r32 values[KartModel_Count] = {
-		0.0f, //KartModel_None
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+	const r32 values[KartDesign_Count] = {
+		0.0f, //KartDesign_None
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			clearance,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
-inline r32 GetKartModelWidth(KartModel model)
+inline r32 GetKartDesignWidth(KartDesign design)
 {
-	const r32 values[KartModel_Count] = {
-		0.7f, //KartModel_None
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+	const r32 values[KartDesign_Count] = {
+		0.7f, //KartDesign_None
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			width,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
-inline r32 GetKartModelForeLength(KartModel model)
+inline r32 GetKartDesignForeLength(KartDesign design)
 {
-	const r32 values[KartModel_Count] = {
-		1.0f, //KartModel_None
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+	const r32 values[KartDesign_Count] = {
+		1.0f, //KartDesign_None
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			foreLength,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
-inline r32 GetKartModelBackLength(KartModel model)
+inline r32 GetKartDesignBackLength(KartDesign design)
 {
-	const r32 values[KartModel_Count] = {
-		0.8f, //KartModel_None
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+	const r32 values[KartDesign_Count] = {
+		0.8f, //KartDesign_None
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			backLength,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
-inline r32 GetKartModelSpeed(KartModel model)
+inline r32 GetKartDesignSpeed(KartDesign design)
 {
-	const r32 values[KartModel_Count] = {
-		1.0f, //KartModel_None
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+	const r32 values[KartDesign_Count] = {
+		1.0f, //KartDesign_None
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			speed,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
-inline r32 GetKartModelAcceleration(KartModel model)
+inline r32 GetKartDesignAcceleration(KartDesign design)
 {
-	const r32 values[KartModel_Count] = {
-		1.0f, //KartModel_None
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+	const r32 values[KartDesign_Count] = {
+		1.0f, //KartDesign_None
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			acceleration,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
-inline r32 GetKartModelTurnRadius(KartModel model)
+inline r32 GetKartDesignTurnRadius(KartDesign design)
 {
-	const r32 values[KartModel_Count] = {
-		1.0f, //KartModel_None
-		#define KART_MODEL(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
+	const r32 values[KartDesign_Count] = {
+		1.0f, //KartDesign_None
+		#define KART_DESIGN(codeNameLowercase, CodeNameUppercase, displayName, assetPath, assetScale, assetRotation, clearance, width, foreLength, backLength, speed, acceleration, turnRadius) \
 			turnRadius,
-		#include "kart_models.h"
+		#include "kart_designs.h"
 	};
-	return values[model % KartModel_Count];
+	return values[design % KartDesign_Count];
 }
 
 #endif //  _KART_H
