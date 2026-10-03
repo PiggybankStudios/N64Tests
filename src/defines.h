@@ -36,9 +36,9 @@ Description:
 #define CAR_MODEL_PATH      MODELS_FOLDER "/ash_kart.model64"
 
 // #define PLANET_MODEL_PATH   MODELS_FOLDER "/proto_planet1.model64"
-// #define PLANET_MODEL_PATH   MODELS_FOLDER "/proto_planet2.model64"
+#define PLANET_MODEL_PATH   MODELS_FOLDER "/proto_planet2.model64"
 // #define PLANET_MODEL_PATH   MODELS_FOLDER "/planet_beach_test.model64"
-#define PLANET_MODEL_PATH   MODELS_FOLDER "/planet_saturn1.model64"
+// #define PLANET_MODEL_PATH   MODELS_FOLDER "/planet_saturn1.model64"
 
 #define ASSET_UNLOADED_INDEX 0xFE
 #define ASSET_FAILED_INDEX   0xFF

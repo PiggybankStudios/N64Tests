@@ -82,3 +82,51 @@ CollisionFace* FindCurrentCollisionFace(CollisionScene* scene, v3 queryPos, r32 
 	#undef PRINT_DEBUG
 	return collidingFace;
 }
+
+CollisionFace* FindGroundFaceBelow(CollisionScene* scene, v3 queryPos, r32* altitudeOut)
+{
+	CollisionFace* resultFace = nullptr;
+	r32 resultEdgeDistance = 0.0f;
+	r32 resultAltitude = 0.0f;
+	
+	for (u32 fIndex = 0; fIndex < scene->numFaces; fIndex++)
+	{
+		CollisionFace* face = &scene->faces[fIndex];
+		if (face->normal.y > 0) //perpendicular faces are "walls", upside-down faces are "roofs", neither are considered "ground"
+		{
+			v2 topDownTriVerts[3] = {
+				MakeV2_Const(face->verts[0].x, face->verts[0].z),
+				MakeV2_Const(face->verts[1].x, face->verts[1].z),
+				MakeV2_Const(face->verts[2].x, face->verts[2].z),
+			};
+			v2 topDownQueryPos = MakeV2_Const(queryPos.x, queryPos.z);
+			r32 topDownDistance = DistanceToTriangleEdgeV2(topDownTriVerts[0], topDownTriVerts[1], topDownTriVerts[2], topDownQueryPos);
+			if (topDownDistance < EPSILON)
+			{
+				if (resultFace == nullptr ||
+					topDownDistance < resultEdgeDistance ||
+					(topDownDistance < EPSILON && resultEdgeDistance < EPSILON))
+				{
+					// We need to find the Y coordinate of the point directly below the queryPos that lives on the surface of the triangle
+					// Any non-wall triangle has a "height function" like: y = ax + bz + c
+					// Here we name them: a=`slopeX`, b=`slopeZ`, c=`heightAtOrigin`
+					r32 slopeX = -(face->normal.x) / face->normal.y;
+					r32 slopeZ = -(face->normal.z) / face->normal.y;
+					r32 heightAtOrigin = face->verts[0].y - (slopeX * face->verts[0].x) - (slopeZ * face->verts[0].z);
+					
+					r32 triFaceY = (slopeX * queryPos.x) + (slopeZ * queryPos.z) + heightAtOrigin;
+					r32 altitude = queryPos.y - triFaceY;
+					if (resultFace == nullptr || AbsR32(altitude) < AbsR32(resultAltitude))
+					{
+						resultFace = face;
+						resultEdgeDistance = topDownDistance;
+						resultAltitude = altitude;
+					}
+				}
+			}
+		}
+	}
+	
+	SetOptionalOutPntr(altitudeOut, resultAltitude);
+	return resultFace;
+}
